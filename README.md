@@ -13,3 +13,4 @@ Version v1.0 release
 - nosexd
 
 ## 🛠 Binario PHP 8.0:
+https://github.com/Dr1xyDev/Linux-Bins-PM2-PM3-PM4
