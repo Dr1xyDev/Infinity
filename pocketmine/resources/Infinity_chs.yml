@@ -135,3 +135,8 @@ developer:
  #Allows loading plugins directly from an unpacked folder inside plugins/ (plugins/MyPlugin/plugin.yml)
  #If false, only .phar plugins will be loaded
  plugin-folder-load: true
+
+server-advance-utils:
+  software-query: true
+  motd: "§bmi servidor\n§rInfinity Server"
+  better-slots: true
