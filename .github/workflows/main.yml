@@ -1,4 +1,4 @@
-name: Extraer infini.zip
+name: Build Infinity PHAR
 
 on:
   workflow_dispatch:
@@ -7,7 +7,7 @@ permissions:
   contents: write
 
 jobs:
-  extract:
+  build:
     runs-on: ubuntu-latest
 
     steps:
@@ -17,32 +17,68 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Instalar unzip
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y unzip
+      - name: Configurar PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.2"
 
-      - name: Extraer infini.zip
+      - name: Preparar estructura
         run: |
-          if [ ! -f "infini.zip" ]; then
-            echo "No se encontró infini.zip"
-            exit 1
-          fi
+          rm -rf build
+          mkdir -p build/src
 
-          unzip -o infini.zip -d .
-          rm -f infini.zip
+          cp -r pocketmine build/src/
+          cp -r raklib build/src/
+          cp -r spl build/src/
+
+      - name: Crear builder
+        run: |
+          cat > build/build.php <<'PHP'
+          <?php
+
+          $output = __DIR__ . "/Infinity.phar";
+
+          if(file_exists($output)){
+              unlink($output);
+          }
+
+          $phar = new Phar($output);
+          $phar->startBuffering();
+
+          $iterator = new RecursiveIteratorIterator(
+              new RecursiveDirectoryIterator(__DIR__ . "/src", FilesystemIterator::SKIP_DOTS)
+          );
+
+          foreach($iterator as $file){
+              $local = "src/" . substr($file->getPathname(), strlen(__DIR__ . "/src/"));
+              $phar->addFile($file->getPathname(), $local);
+          }
+
+          $phar->setStub('<?php define("pocketmine\\PATH", "phar://". __FILE__ ."/"); require_once("phar://". __FILE__ ."/src/pocketmine/PocketMine.php");  __HALT_COMPILER(); ?>');
+
+          $phar->stopBuffering();
+
+          echo "Infinity.phar creado correctamente.\n";
+          PHP
+
+      - name: Compilar PHAR
+        run: php -d phar.readonly=0 build/build.php
+
+      - name: Reemplazar PHAR del repositorio
+        run: |
+          mv -f build/Infinity.phar ./Infinity.phar
 
       - name: Commit y Push
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git add .
+          git add Infinity.phar
 
           if git diff --cached --quiet; then
             echo "No hay cambios."
             exit 0
           fi
 
-          git commit -m "Extraer infini.zip"
+          git commit -m "Actualizar Infinity.phar"
           git push origin HEAD
