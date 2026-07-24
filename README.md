@@ -5,7 +5,6 @@ Version v1.0 release
 - se añadio generación vanilla
 - se añadio la posibilidad de cargar plugins vía folder
 - se añadieron conandos /makephar <plugin> y /extractphar <plugin_name>
-- se añadio soporte multiversion de 0.15.10 - 0.14.3
 
 ## ⚙️ Tareas pendientes:
 - añadir soporte IA para los mobs
