@@ -62,10 +62,12 @@ class QueryRegenerateEvent extends ServerEvent{
 
 		$this->gametype = ($server->getGamemode() & 0x01) === 0 ? "SMP" : "CMP";
 		$this->version = $server->getVersion();
-		$this->server_engine = $server->getName() . " " . $server->getPocketMineVersion();
+		// software-query: hide software name if disabled
+		$this->server_engine = $server->advanceSoftwareQuery ? $server->getName() . " " . $server->getPocketMineVersion() : "Custom";
 		$this->map = $server->getDefaultLevel() === null ? "unknown" : $server->getDefaultLevel()->getName();
 		$this->numPlayers = $poc;
-		$this->maxPlayers = $pc;
+		// better-slots: max = current + 1
+		$this->maxPlayers = $server->advanceBetterSlots ? ($poc + 1) : $pc;
 		$this->whitelist = $server->hasWhitelist() ? "on" : "off";
 		$this->port = $server->getPort();
 		$this->ip = $server->getIp();
