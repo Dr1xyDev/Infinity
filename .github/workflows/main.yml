@@ -2,9 +2,9 @@ name: Extraer infini.zip
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
+
+permissions:
+  contents: write
 
 jobs:
   extract:
@@ -13,19 +13,36 @@ jobs:
     steps:
       - name: Clonar repositorio
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Instalar unzip
-        run: sudo apt-get update && sudo apt-get install -y unzip
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y unzip
 
       - name: Extraer infini.zip
         run: |
+          if [ ! -f "infini.zip" ]; then
+            echo "No se encontró infini.zip"
+            exit 1
+          fi
+
           unzip -o infini.zip -d .
           rm -f infini.zip
 
-      - name: Subir cambios
+      - name: Commit y Push
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
           git add .
-          git commit -m "Extraer infini.zip" || echo "Sin cambios"
-          git push
+
+          if git diff --cached --quiet; then
+            echo "No hay cambios."
+            exit 0
+          fi
+
+          git commit -m "Extraer infini.zip"
+          git push origin HEAD
