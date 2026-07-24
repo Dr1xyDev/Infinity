@@ -1,0 +1,37 @@
+<?php
+
+/*
+ * ░▀█▀░█▀█░█▀▀░▀█▀░█▀█░▀█▀░▀█▀░█░█
+ * ░░█░░█░█░█▀▀░░█░░█░█░░█░░░█░░░█░
+ * ░▀▀▀░▀░▀░▀░░░▀▀▀░▀░▀░▀▀▀░░▀░░░▀░v1.0
+ *               InfinityProject By @Dr1xyDev
+ *   YT:         @Dr1xyDev
+ *   GitHub:     github.com/Dr1xyDev/Infinity
+*/
+
+namespace pocketmine\event\entity;
+
+use pocketmine\entity\Entity;
+use pocketmine\Event;
+use pocketmine\event\Cancellable;
+use pocketmine\entity\Effect;
+
+class EntityEffectRemoveEvent extends EntityEvent implements Cancellable{
+
+	public static $handlerList = null;
+
+	/** @var Effect */
+	protected $effect;
+
+	public function __construct(Entity $entity, int $effect){
+		$this->entity = $entity;
+		$this->effect = $effect;
+	}
+
+	/**
+	 * @return Effect
+	 */
+	public function getEffect(){
+		return $this->effect;
+	}
+}

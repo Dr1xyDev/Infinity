@@ -1,0 +1,138 @@
+#Configuracões avançados do Genisys
+
+#Versão do arquivo
+config:
+ version: 22
+
+level:
+ #Definir se ligar o sistema meteorológico
+ weather: false
+ #Duração aleatória do clima
+ weather-random-duration-min: 6000
+ weather-random-duration-max: 12000
+ #Intervalo de relâmpago aleatório, padrão como 10s, 0 = desabilitar
+ lightning-time: 0
+ #Defina se habilitar relâmpagos com fogo
+ lightning-fire: false
+ #Defina se permitir a propagação do fogo
+ fire-spread: false
+ 
+player:
+ #A mudança do sistema de fome
+ hunger: true
+ #Escolha se ligar a experiência sustenta
+ experience: true
+ #Escolha se manter o inventário quando um jogador morrer
+ keep-inventory: false
+ #Limpe o inventário automaticamente quando mudar o modo de jogo para criativo
+ auto-clear-inventory: true
+ #Escolha se manter a experiência quando um jogador morrer
+ keep-experience: false
+ #Se os jogadores travarem ao entrar, defina abaixo de 10. disable = -1
+ chunk-radius: -1
+
+nether:
+ #Escolha se o nether é permitido, o nível de nether será gerado automaticamente
+ allow-nether: false
+ #O nome do nível inferior
+ level-name: "nether"
+ 
+server:
+ #Escolha se a geração do golem de ferro é permitida
+ allow-iron-golem: false
+ #Escolha se a desova do golem de neve é permitida
+ allow-snow-golem: false
+ #Escolha se desabilitar server.log
+ disable-log: true
+ #Escolha se habilitar anti fly automática
+ anti-fly: false
+ #Escolha se habilitar a solicitação de blocos por AsyncTask
+ async-chunk-request: true
+ #Escolha como lembrar o jogador quando um jogador entrar
+ #0 = Message, 1 = Tip, 2 = Popup
+ player-msg-type: 0
+ login-msg: "§3@player joined the game"
+ logout-msg: "§3@player left the game"
+ #Escolha se lê receitas de json
+ recipes-from-json: false
+ #Escolha se deseja ler o item criativo da json
+ creative-items-from-json: false
+ #Escolha se habilitar a verificação de movimento (sem mais puxar)
+ check-movement: true
+ #Defina se habilitar criativo limitado (não pode largar o item, não pode interagir com baús e assim por diante)
+ limited-creative: false
+ #Definir se adicionar DestroyBlockParticle
+ destroy-block-particle: true
+ #Definir se habilitar poção de respingo
+ allow-splash-potion: true
+ #Defina se habilitar seletor de comando avançado
+ advanced-command-selector: true
+
+enchantment:
+ #Escolha se a bigorna é permitida
+ enable-anvil: true
+ #Escolha se EnchantingTable é permitido
+ enable-enchanting-table: true
+ #Escolha se deseja contar as estantes de livros, pode causar lentidão no servidor.
+ #Se esta opção for falsa, o servidor usará uma contagem aleatória (0 ~ 15)
+ count-bookshelf: false
+
+redstone:
+ ##########################################
+ ###Escolha se o sistema redstone é permitido ###
+ ##########################################
+ #Se não for verdade, o redstone não funcionará #
+ ##########################################
+ enable: false
+ #Escolha se um pulso de baixa frequência
+ frequency-pulse: false
+ #Defina a frequência de pulso, Padrão: 1s
+ pulse-frequency: 1
+
+synapse:
+ #Se você deseja usar a API Synapse ou se conectar a um servidor de sinapse, habilite este
+ enabled: false
+ server-ip: 127.0.0.1
+ server-port: 10305
+ #Se este cliente for o lobby ou o servidor principal
+ is-main-server: true
+ server-password: 32bitlongkey
+ #A descrição deste cliente é o identificador deste cliente
+ description: "A Synapse client"
+ #Desativar RakLib significa que os jogadores só podem entrar 
+ disable-rak: false
+
+dserver:
+ #A contagem de todos os servidores unificados
+ enable: false
+ #Query update automatica
+ query-auto-update: false
+ #Periódico de atualização de consulta
+ query-tick-update: true
+ #O número máximo de jogadores de Motd
+ motd-max-players: 0
+ #O número máximo de jogadores de consulta ， 0 = Padrão
+ query-max-players: 0
+ #Mostra o número de todos os jogadores no motd
+ motd-all-players: false
+ #Mostra o número de todos os jogadores na Consulta
+ query-all-players: false
+ #Mostra o número de jogadores online no motd
+ motd-players: false
+ #Mostra o número de jogadores online na Consulta
+ query-players: false
+ #Frequência de atualização, 20 = 1s
+ time: 40
+ #Tempos de repetição automática quando falhou
+ retry-times: 3
+ #a lista de servidores ， Separe por ';', por exemplo. 1.exemplo.com:19132;2.example.com:19133
+ server-list: ""
+
+inventory:
+ #Defina como verdadeiro se você tiver problemas com bigornas. Processará as transações de estoque de maneira simples, sem anti-cheats ou verificação.
+ allow-cheats: false
+
+developer:
+ #Allows loading plugins directly from an unpacked folder inside plugins/ (plugins/MyPlugin/plugin.yml)
+ #If false, only .phar plugins will be loaded
+ plugin-folder-load: true

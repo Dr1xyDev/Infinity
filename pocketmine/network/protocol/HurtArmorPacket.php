@@ -1,0 +1,31 @@
+<?php
+
+/*
+ * ░▀█▀░█▀█░█▀▀░▀█▀░█▀█░▀█▀░▀█▀░█░█
+ * ░░█░░█░█░█▀▀░░█░░█░█░░█░░░█░░░█░
+ * ░▀▀▀░▀░▀░▀░░░▀▀▀░▀░▀░▀▀▀░░▀░░░▀░v1.0
+ *               InfinityProject By @Dr1xyDev
+ *   YT:         @Dr1xyDev
+ *   GitHub:     github.com/Dr1xyDev/Infinity
+*/
+
+namespace pocketmine\network\protocol;
+
+#include <rules/DataPacket.h>
+
+
+class HurtArmorPacket extends DataPacket{
+	const NETWORK_ID = Info::HURT_ARMOR_PACKET;
+
+	public $health;
+
+	public function decode(){
+
+	}
+
+	public function encode(){
+		$this->reset();
+		$this->putByte($this->health);
+	}
+
+}
