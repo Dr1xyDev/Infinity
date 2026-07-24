@@ -352,6 +352,10 @@ class Server{
         public $keepExperience = false;
         /** Whether plugins can be loaded straight from a folder (plugins/MyPlugin/plugin.yml) in addition to .phar */
         public $pluginFolderLoad = true;
+        // server-advance-utils
+        public $advanceSoftwareQuery = true;
+        public $advanceMotd = null;
+        public $advanceBetterSlots = true;
         public $limitedCreative = true;
         public $chunkRadius = -1;
         public $destroyBlockParticle = true;
@@ -688,6 +692,8 @@ class Server{
          * @return string
          */
         public function getMotd(){
+                // use advance motd if configured
+                if($this->advanceMotd !== null) return str_replace("\\n", "\n", $this->advanceMotd);
                 return $this->getConfigString("motd", "Minecraft: PE Server");
         }
 
@@ -1617,6 +1623,10 @@ class Server{
                 $this->allowInventoryCheats = $this->getAdvancedProperty("inventory.allow-cheats", false);
 
                 $this->pluginFolderLoad = (bool) $this->getAdvancedProperty("developer.plugin-folder-load", true);
+                // server-advance-utils
+                $this->advanceSoftwareQuery = (bool) $this->getAdvancedProperty("server-advance-utils.software-query", true);
+                $this->advanceMotd = $this->getAdvancedProperty("server-advance-utils.motd", null);
+                $this->advanceBetterSlots = (bool) $this->getAdvancedProperty("server-advance-utils.better-slots", true);
         }
 
         /**
