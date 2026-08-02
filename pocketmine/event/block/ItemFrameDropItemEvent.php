@@ -1,0 +1,47 @@
+<?php
+/*    
+ * ░▀█▀░█▀█░█▀▀░▀█▀░█▀█░▀█▀░▀█▀░█░█    
+ * ░░█░░█░█░█▀▀░░█░░█░█░░█░░░█░░░█░    
+ * ░▀▀▀░▀░▀░▀░░░▀▀▀░▀░▀░▀▀▀░░▀░░░▀░v1.1
+ *               InfinityProject By @Dr1xyDev    
+ *   YT:         @Dr1xyDev    
+ *   GitHub:     github.com/Dr1xyDev/Infinity    
+*/
+
+namespace pocketmine\event\block;
+
+use pocketmine\block\Block;
+use pocketmine\event\Cancellable;
+use pocketmine\item\Item;
+use pocketmine\Player;
+use pocketmine\tile\ItemFrame;
+
+class ItemFrameDropItemEvent extends BlockEvent implements Cancellable{
+	public static $handlerList = null;
+
+	
+	private $player;
+	
+	private $item;
+	
+	private $itemFrame;
+
+	public function __construct(Player $player, Block $block, ItemFrame $itemFrame, Item $item){
+		$this->player = $player;
+		$this->block = $block;
+		$this->itemFrame = $itemFrame;
+		$this->item = $item;
+	}
+
+	public function getPlayer(){
+		return $this->player;
+	}
+
+	public function getItemFrame(){
+		return $this->itemFrame;
+	}
+
+	public function getItem(){
+		return $this->item;
+	}
+}

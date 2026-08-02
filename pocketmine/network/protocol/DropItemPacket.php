@@ -1,0 +1,28 @@
+<?php
+/*    
+ * ░▀█▀░█▀█░█▀▀░▀█▀░█▀█░▀█▀░▀█▀░█░█    
+ * ░░█░░█░█░█▀▀░░█░░█░█░░█░░░█░░░█░    
+ * ░▀▀▀░▀░▀░▀░░░▀▀▀░▀░▀░▀▀▀░░▀░░░▀░v1.1
+ *               InfinityProject By @Dr1xyDev    
+ *   YT:         @Dr1xyDev    
+ *   GitHub:     github.com/Dr1xyDev/Infinity    
+*/
+
+namespace pocketmine\network\protocol;
+
+class DropItemPacket extends DataPacket{
+	const NETWORK_ID = Info::DROP_ITEM_PACKET;
+
+	public $type;
+	public $item;
+
+	public function decode(){
+		$this->type = $this->getByte();
+		$this->item = $this->getSlot();
+	}
+
+	public function encode(){
+
+	}
+
+}

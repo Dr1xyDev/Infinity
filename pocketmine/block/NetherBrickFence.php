@@ -1,0 +1,62 @@
+<?php
+/*    
+ * ░▀█▀░█▀█░█▀▀░▀█▀░█▀█░▀█▀░▀█▀░█░█    
+ * ░░█░░█░█░█▀▀░░█░░█░█░░█░░░█░░░█░    
+ * ░▀▀▀░▀░▀░▀░░░▀▀▀░▀░▀░▀▀▀░░▀░░░▀░v1.1
+ *               InfinityProject By @Dr1xyDev    
+ *   YT:         @Dr1xyDev    
+ *   GitHub:     github.com/Dr1xyDev/Infinity    
+*/
+
+namespace pocketmine\block;
+
+use pocketmine\item\Item;
+use pocketmine\item\Tool;
+
+class NetherBrickFence extends Transparent {
+	
+	protected $id = self::NETHER_BRICK_FENCE;
+	
+	public function __construct($meta = 0){
+		$this->meta = (int) $meta;
+	}
+	
+	public function getBreakTime(Item $item){
+		if ($item instanceof Air){
+			
+			return 10;
+		}
+		else{
+			
+			return parent::getBreakTime($item);
+		}
+	}
+	
+	public function getHardness() {
+		return 2;
+	}
+        
+	public function getToolType(){
+		
+		return Tool::TYPE_PICKAXE;
+	}
+	
+	public function getName() : string{
+		return "Nether Brick Fence";
+	}
+	
+	public function canConnect(Block $block){
+		
+		return ($block instanceof NetherBrickFence ) ? true : $block->isSolid() and !$block->isTransparent();
+	}
+	
+	public function getDrops(Item $item) : array {
+		if($item->isPickaxe() >= Tool::TIER_WOODEN){
+			return [
+				[Item::NETHER_BRICK_FENCE, $this->meta, 1],
+			];
+		}else{
+			return [];
+		}
+	}
+}

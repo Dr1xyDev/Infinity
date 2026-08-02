@@ -1,0 +1,239 @@
+# Main configuration file for PocketMine-MP
+# These settings are the ones that cannot be included in server.properties
+# Some of these settings are safe, others can break your server if modified incorrectly
+# New settings/defaults won't appear automatically on this file when upgrading.
+
+settings:
+ #Three-letter language code for server-side localization
+ #Check your language code on https://en.wikipedia.org/wiki/List_of_ISO_639-2_codes
+ language: "eng"
+ #Whether to send all strings translated to server locale or let the device handle them
+ force-language: false
+ #When server shut down, the players will get kicked and this is what will show on there screen.
+ shutdown-message: "Server closed"
+ #Allow listing plugins via Query
+ query-plugins: false
+ #Show a console message when a plugin uses deprecated API methods
+ deprecated-verbose: false
+ #Enable plugin and core profiling by default
+ enable-profiling: false
+ #Will only add results when tick measurement is below or equal to given value (default 20)
+ profile-report-trigger: 20
+ #Number of AsyncTask workers.
+ #Used for plugin asynchronous tasks, world generation, compression and web communication.
+ #Set this approximately to your number of cores.
+ #If set to auto, it'll try to detect the number of cores (or use 2)
+ async-workers: 2
+ #Enables use of non-production, development builds. WARNING: DO NOT enable this unless you are sure you know what you are doing.
+ enable-testing: false
+
+memory:
+ #Global soft memory limit in megabytes. Set to 0 to disable
+ #This will trigger low-memory-triggers and fire an event to free memory when the usage goes over this
+ global-limit: 0
+
+ #Main thread soft memory limit in megabytes. Set to 0 to disable
+ #This will trigger low-memory-triggers and fire an event to free memory when the usage goes over this
+ main-limit: 0
+
+ #Main thread hard memory limit in megabytes. Set to 0 to disable
+ #This will stop the server when the limit is surpassed
+ main-hard-limit: 1024
+
+ #Period in ticks to check memory (default 1 second)
+ check-rate: 20
+
+ #Continue firing low-memory-triggers and event while on low memory
+ continuous-trigger: true
+
+ #Only if memory.continuous-trigger is enabled. Specifies the rate in memory.check-rate steps (default 30 seconds)
+ continuous-trigger-rate: 30
+
+ garbage-collection:
+  #Period in ticks to fire the garbage collector manually (default 30 minutes), set to 0 to disable
+  #This only affect the main thread. Other threads should fire their own collections
+  period: 36000
+
+  #Fire asynchronous tasks to collect garbage from workers
+  collect-async-worker: true
+
+  #Trigger on low memory
+  low-memory-trigger: true
+
+ max-chunks:
+  #Limit of chunks to load per player, overrides chunk-sending.max-chunks
+  trigger-limit: 28
+
+  #Do chunk garbage collection on trigger
+  trigger-chunk-collect: true
+
+  #Trigger on low memory
+  low-memory-trigger: true
+
+ world-caches:
+  disable-chunk-cache: false
+  low-memory-trigger: true
+
+
+network:
+ #Threshold for batching packets, in bytes. Only these packets will be compressed
+ #Set to 0 to compress everything, -1 to disable.
+ batch-threshold: 512
+ #Compression level used when sending batched packets. Higher = Uses More CPU, Less = More Bandwidth Usage
+ compression-level: 2
+ #Use AsyncTasks for compression. Adds half/one tick delay, less CPU load on main thread
+ async-compression: true
+ #Experimental, only for Windows. Tries to use UPnP to automatically port forward
+ upnp-forwarding: false
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Anti-DDoS / Anti-Bot / Packet Limiter — Infinity Core
+# ─────────────────────────────────────────────────────────────────────────────
+# Todos los umbrales son GENEROSOS por defecto: el jugador legítimo no lo nota.
+# Si quieres protección más estricta, baja los valores. Si tu servidor tiene
+# muchos jugadores detrás de un mismo NAT (cybercafé, escuela), sube los
+# max-sessions-per-ip y max-conn-per-window.
+anti-ddos:
+ # ─── Capa RakLib (network thread) — filtra TODO el tráfico entrante ───
+ # Máximo de paquetes por IP por segundo antes de banear (defecto: 200).
+ max-packets-per-second: 200
+ # Máximo de UNCONNECTED_PING por IP por segundo (defecto: 30).
+ max-pings-per-second: 30
+ # Máximo de OPEN_CONNECTION_REQUEST por IP en la ventana (defecto: 12).
+ max-conn-per-window: 12
+ # Tamaño de la ventana de conexión en segundos (defecto: 10).
+ conn-window-seconds: 10
+ # Máximo de paquetes/seg GLOBALES en todo el servidor (defecto: 8000).
+ max-global-packets-per-second: 8000
+ # Máximo de bytes por paquete DATA (defecto: 65535).
+ max-packet-bytes: 65535
+ # Máximo de bytes por paquete NON-DATA (ping/handshake) (defecto: 4096).
+ max-nondatapacket-bytes: 4096
+ # Detección de ráfaga: picos > N paquetes en M segundos = ban.
+ burst-short-packets: 80
+ burst-short-window: 0.1
+ # Ban progresivo: primer offence = ban-base-seconds. Cada reincidencia
+ # duplica el ban hasta ban-max-seconds.
+ ban-base-seconds: 3600
+ ban-max-seconds: 86400
+ ban-escalation-max: 4
+ # Si true, escribe cada ban en RakLib.log y AntiDDoS.log.
+ log-attacks: true
+
+ # ─── Capa hilo principal (anti-bot / login flood) ───
+ # Máximo de sesiones concurrentes por IP (defecto: 4).
+ max-sessions-per-ip: 4
+ # Máximo de logins por IP en la ventana (defecto: 6).
+ max-logins-per-window: 6
+ # Tamaño de la ventana de login en segundos (defecto: 10).
+ login-window-seconds: 10
+ # Ban automático para bots de login, en segundos (defecto: 7200 = 2h).
+ bot-ban-seconds: 7200
+
+ # ─── Packet limiter transparente (por jugador, NO kickea) ───
+ # true = activa el limitador por tipo de paquete (descarta el exceso).
+ player-limiter-enabled: true
+ # Cap total de paquetes/seg por jugador (defecto: 250).
+ player-limiter-global-cap: 250
+ # Override por tipo de paquete (opcional). Claves = nombre de constante
+ # en pocketmine\network\protocol\Info. Ejemplo:
+ # player-limiter-limits:
+ #   MOVE_PLAYER_PACKET: 50
+ #   TEXT_PACKET: 3
+ player-limiter-limits: {}
+
+debug:
+ #If > 1, it will show debug messages in the console
+ level: 1
+ #Enables /status, /gc
+ commands: true
+
+player:
+ #Choose whether to enable player data saving.
+ save-player-data: true
+
+level-settings:
+ #The default format that levels will use when created
+ default-format: anvil
+ #If true, converts from a format that is not the default to the default format on load
+ #NOTE: This is currently not implemented
+ convert-format: false
+ #Automatically change levels tick rate to maintain 20 ticks per second
+ auto-tick-rate: true
+ auto-tick-rate-limit: 20
+ #Sets the base tick rate (1 = 20 ticks per second, 2 = 10 ticks per second, etc.)
+ base-tick-rate: 1
+ #Tick all players each tick even when other settings disallow this.
+ always-tick-players: false
+
+chunk-sending:
+ #Amount of chunks sent to players per tick
+ per-tick: 1
+ #Amount of chunks sent around each player
+ max-chunks: 14
+ #Amount of chunks that need to be sent before spawning the player
+ spawn-threshold: 4
+ #Save a serialized copy of the chunk in memory for faster sending
+ #Useful in mostly-static worlds where lots of players join at the same time
+ cache-chunks: true
+
+chunk-ticking:
+ #Max amount of chunks processed each tick
+ per-tick: 16
+ #Radius of chunks around a player to tick
+ tick-radius: 3
+ light-updates: false
+ clear-tick-list: true
+
+chunk-generation:
+ #Max. amount of chunks in the waiting queue to be generated
+ queue-size: 2
+ #Max. amount of chunks in the waiting queue to be populated
+ population-queue-size: 4
+
+ticks-per:
+ animal-spawns: 400
+ monster-spawns: 1
+ autosave: 6000
+ cache-cleanup: 900
+spawn-limits:
+  monsters: 70
+  animals: 15
+  water-animals: 5
+  ambient: 15
+
+auto-report:
+ #Send crash reports for processing
+ enabled: false
+ send-code: false
+ send-settings: false
+ send-phpinfo: false
+ host: crash.pocketmine.net
+
+anonymous-statistics:
+ #Sends anonymous statistics for data aggregation, plugin usage tracking
+ enabled: false
+ host: stats.pocketmine.net
+
+commands:
+ #Here you can customize server commands
+ #Specify command names to override the default set here.
+ #If no custom value is defined for a command, the default will be used.
+ #NOTE: Some commands cannot be disabled here, such as the important ones like /stop, /reload, etc.
+ default: true
+ #Set override values per command here
+ #For example, uncommenting the below will disable /plugins and /version
+ #version: false
+ #plugins: false
+
+aliases:
+ #Examples:
+ #showtheversion: version
+ #savestop: [save-all, stop]
+
+worlds:
+ #These settings will override the generator set in server.properties and allows loading multiple levels
+ #Example:
+ #world:
+ # seed: 404
+ # generator: FLAT:2;7,59x1,3x3,2;1;decoration(treecount=80 grasscount=45)

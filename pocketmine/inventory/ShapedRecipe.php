@@ -1,0 +1,147 @@
+<?php
+/*    
+ * ░▀█▀░█▀█░█▀▀░▀█▀░█▀█░▀█▀░▀█▀░█░█    
+ * ░░█░░█░█░█▀▀░░█░░█░█░░█░░░█░░░█░    
+ * ░▀▀▀░▀░▀░▀░░░▀▀▀░▀░▀░▀▀▀░░▀░░░▀░v1.1
+ *               InfinityProject By @Dr1xyDev    
+ *   YT:         @Dr1xyDev    
+ *   GitHub:     github.com/Dr1xyDev/Infinity    
+*/
+
+namespace pocketmine\inventory;
+
+use pocketmine\item\Item;
+use pocketmine\Server;
+use pocketmine\utils\UUID;
+use pocketmine\math\Vector2;
+
+class ShapedRecipe implements Recipe{
+	
+	private $output;
+
+	private $id = null;
+
+	
+	private $shape = [];
+
+	
+	private $ingredients = [];
+	
+	private $shapeItems = [];
+
+	
+	public function __construct(Item $result, ...$shape){
+		if(count($shape) === 0){
+			throw new \InvalidArgumentException("Must provide a shape");
+		}
+		if(count($shape) > 3){
+			throw new \InvalidStateException("Crafting recipes should be 1, 2, 3 rows, not " . count($shape));
+		}
+		foreach($shape as $y => $row){
+			if(strlen($row) === 0 or strlen($row) > 3){
+				throw new \InvalidStateException("Crafting rows should be 1, 2, 3 characters, not " . count($row));
+			}
+			$this->ingredients[] = array_fill(0, strlen($row), null);
+			$len = strlen($row);
+			for($i = 0; $i < $len; ++$i){
+				$this->shape[$row[$i]] = null;
+
+				if(!isset($this->shapeItems[$row[$i]])){
+					$this->shapeItems[$row[$i]] = [new Vector2($i, $y)];
+				}else{
+					$this->shapeItems[$row[$i]][] = new Vector2($i, $y);
+				}
+			}
+		}
+
+		$this->output = clone $result;
+	}
+
+	public function getWidth(){
+		return count($this->ingredients[0]);
+	}
+
+	public function getHeight(){
+		return count($this->ingredients);
+	}
+
+	public function getResult(){
+		return $this->output;
+	}
+
+	public function getId(){
+		return $this->id;
+	}
+
+	public function setId(UUID $id){
+		if($this->id !== null){
+			throw new \InvalidStateException("Id is already set");
+		}
+
+		$this->id = $id;
+	}
+
+	
+	public function setIngredient($key, Item $item){
+		if(!array_key_exists($key, $this->shape)){
+			throw new \Exception("Symbol does not appear in the shape: " . $key);
+		}
+
+		$item->setCount(1);
+		$this->fixRecipe($key, $item);
+
+		return $this;
+	}
+
+	protected function fixRecipe($key, $item){
+		foreach($this->shapeItems[$key] as $entry){
+			$this->ingredients[$entry->y][$entry->x] = clone $item;
+		}
+	}
+
+	
+	public function getIngredientMap(){
+		$ingredients = [];
+		foreach($this->ingredients as $y => $row){
+			$ingredients[$y] = [];
+			foreach($row as $x => $ingredient){
+				if($ingredient !== null){
+					$ingredients[$y][$x] = clone $ingredient;
+				}else{
+					$ingredients[$y][$x] = Item::get(Item::AIR);
+				}
+			}
+		}
+
+		return $ingredients;
+	}
+
+	
+ 	public function getIngredientList(){
+ 		$ingredients = [];
+ 		for ($x = 0; $x < 3; ++$x){
+ 			for ($y = 0; $y < 3; ++$y){
+ 				if (!empty($this->ingredients[$x][$y])){
+ 					if ($this->ingredients[$x][$y]->getId() !== Item::AIR){
+ 						$ingredients[] = clone $this->ingredients[$x][$y];
+ 					}
+ 				}
+ 			}
+ 		}
+ 		return $ingredients;
+ 	}
+
+	
+	public function getIngredient($x, $y){
+		return isset($this->ingredients[$y][$x]) ? $this->ingredients[$y][$x] : Item::get(Item::AIR);
+	}
+
+	
+	public function getShape(){
+		return $this->shape;
+	}
+
+	public function registerToCraftingManager(){
+		Server::getInstance()->getCraftingManager()->registerShapedRecipe($this);
+	}
+}
