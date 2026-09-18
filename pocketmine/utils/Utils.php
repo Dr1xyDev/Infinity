@@ -9,7 +9,7 @@
 */
 
 namespace pocketmine\utils;
-use pocketmine\ThreadManager;
+use pocketmine\thread\ThreadManager;
 
 class Utils{
 	public static $online = true;

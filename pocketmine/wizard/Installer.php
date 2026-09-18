@@ -33,6 +33,9 @@ class Installer{
 
 	private $defaultLang;
 
+	/** @var InstallerLang */
+	private $lang;
+
 	public function __construct(){
 		echo "[*] Genisys set-up wizard\n";
 		echo "[*] Please select a language:\n";

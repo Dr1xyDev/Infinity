@@ -86,11 +86,13 @@ class Random{
 
 	
 	public function nextRange($start = 0, $end = 0x7fffffff){
+		$start = (int) $start;
+		$end = (int) $end;
 		return $start + ($this->nextInt() % ($end + 1 - $start));
 	}
 
 	public function nextBoundedInt($bound){
-		return $this->nextInt() % $bound;
+		return $this->nextInt() % (int) $bound;
 	}
 
 }

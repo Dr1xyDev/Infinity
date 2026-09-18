@@ -11,8 +11,8 @@
 namespace raklib;
 
 $errors = 0;
-if(version_compare("7.0", PHP_VERSION) > 0){
-	echo "[CRITICAL] Use PHP >= 7.0" . PHP_EOL;
+if(version_compare("8.3.0", PHP_VERSION) > 0){
+	echo "[CRITICAL] This software requires PHP 8.3+, but you have PHP " . PHP_VERSION . "." . PHP_EOL;
 	++$errors;
 }
 
@@ -21,17 +21,17 @@ if(!extension_loaded("sockets")){
 	++$errors;
 }
 
-if(!extension_loaded("pthreads")){
-	echo "[CRITICAL] Unable to find the pthreads extension." . PHP_EOL;
+if(!extension_loaded("pmmpthread")){
+	echo "[CRITICAL] Unable to find the pmmpthread extension (fork of pthreads for PHP 8.3+)." . PHP_EOL;
 	++$errors;
 }else{
-	$pthreads_version = phpversion("pthreads");
-	if(substr_count($pthreads_version, ".") < 2){
-		$pthreads_version = "0.$pthreads_version";
+	$pmmpthread_version = phpversion("pmmpthread");
+	if(substr_count($pmmpthread_version, ".") < 2){
+		$pmmpthread_version = "0.$pmmpthread_version";
 	}
 
-	if(version_compare($pthreads_version, "3.0.0") < 0){
-		echo "[CRITICAL] pthreads >= 3.0.0 is required, while you have $pthreads_version.";
+	if(version_compare($pmmpthread_version, "6.0.0") < 0){
+		echo "[CRITICAL] pmmpthread >= 6.0.0 is required, while you have $pmmpthread_version.";
 		++$errors;
 	}
 }

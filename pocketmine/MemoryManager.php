@@ -225,14 +225,14 @@ class MemoryManager{
 		];
 		$this->leakInfo[$id] = $this->leakInfo[$identifier];
 
-		$this->leakWatch[$id] = new \WeakRef($object);
+		$this->leakWatch[$id] = \WeakReference::create($object);
 
 		return $id;
 	}
 
 	public function isObjectAlive($id){
 		if(isset($this->leakWatch[$id])){
-			return $this->leakWatch[$id]->valid();
+			return $this->leakWatch[$id]->get() !== null;
 		}
 
 		return false;
@@ -249,7 +249,7 @@ class MemoryManager{
 
 	public function doObjectCleanup(){
 		foreach($this->leakWatch as $id => $w){
-			if(!$w->valid()){
+			if($w->get() === null){
 				$this->removeObjectWatch($id);
 			}
 		}
@@ -264,10 +264,8 @@ class MemoryManager{
 		$references = 0;
 		$object = null;
 
-		if($this->leakWatch[$id]->acquire()){
-			$object = $this->leakWatch[$id]->get();
-			$this->leakWatch[$id]->release();
-
+		$object = $this->leakWatch[$id]->get();
+		if($object !== null){
 			$valid = true;
 			$references = getReferenceCount($object, false);
 		}

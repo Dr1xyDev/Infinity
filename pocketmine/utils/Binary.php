@@ -293,6 +293,7 @@ class Binary{
         }
 
         public static function writeLong($value){
+                $value = (int) $value;
                 if(PHP_INT_SIZE === 8){
                         return pack("NN", $value >> 32, $value & 0xFFFFFFFF);
                 }else{

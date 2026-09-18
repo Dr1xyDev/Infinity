@@ -46,11 +46,11 @@ class ListTag extends NamedTag implements \ArrayAccess, \Countable{
 		return $count;
 	}
 
-	public function offsetExists($offset){
+	public function offsetExists($offset) : bool{
 		return isset($this->{$offset});
 	}
 
-	public function offsetGet($offset){
+	public function offsetGet($offset) : mixed{
 		if(isset($this->{$offset}) and $this->{$offset} instanceof Tag){
 			if($this->{$offset} instanceof \ArrayAccess){
 				return $this->{$offset};
@@ -62,7 +62,7 @@ class ListTag extends NamedTag implements \ArrayAccess, \Countable{
 		return null;
 	}
 
-	public function offsetSet($offset, $value){
+	public function offsetSet($offset, $value) : void{
 		if($value instanceof Tag){
 			$this->{$offset} = $value;
 		}elseif($this->{$offset} instanceof Tag){
@@ -70,11 +70,11 @@ class ListTag extends NamedTag implements \ArrayAccess, \Countable{
 		}
 	}
 
-	public function offsetUnset($offset){
+	public function offsetUnset($offset) : void{
 		unset($this->{$offset});
 	}
 
-	public function count($mode = COUNT_NORMAL){
+	public function count($mode = COUNT_NORMAL) : int{
 		for($i = 0; true; $i++){
 			if(!isset($this->{$i})){
 				return $i;

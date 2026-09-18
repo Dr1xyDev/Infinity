@@ -1,16 +1,17 @@
 <?php
-/*    
- * ░▀█▀░█▀█░█▀▀░▀█▀░█▀█░▀█▀░▀█▀░█░█    
- * ░░█░░█░█░█▀▀░░█░░█░█░░█░░░█░░░█░    
+
+/*
+ * ░▀█▀░█▀█░█▀▀░▀█▀░█▀█░▀█▀░▀█▀░█░█
+ * ░░█░░█░█░█▀▀░░█░░█░█░░█░░░█░░░█░
  * ░▀▀▀░▀░▀░▀░░░▀▀▀░▀░▀░▀▀▀░░▀░░░▀░v1.1
- *               InfinityProject By @Dr1xyDev    
- *   YT:         @Dr1xyDev    
- *   GitHub:     github.com/Dr1xyDev/Infinity    
+ *               InfinityProject By @Dr1xyDev
+ *   YT:         @Dr1xyDev
+ *   GitHub:     github.com/Dr1xyDev/Infinity
 */
 
 namespace pocketmine\utils;
 
-use pocketmine\Thread;
+use pocketmine\thread\Thread;
 
 class ServerKiller extends Thread{
 
@@ -20,7 +21,7 @@ class ServerKiller extends Thread{
 		$this->time = $time;
 	}
 
-	public function run(){
+	public function onRun() : void{
 		$start = time() + 1;
 		$this->synchronized(function(){
 			$this->wait($this->time * 1000000);
@@ -31,7 +32,7 @@ class ServerKiller extends Thread{
 		}
 	}
 
-	public function getThreadName(){
+	public function getThreadName() : string{
 		return "Server Killer";
 	}
 }

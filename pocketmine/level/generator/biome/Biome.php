@@ -213,12 +213,12 @@ abstract class Biome{
                 return $this->rainfall;
         }
 
-        private static function generateBiomeColor($temperature, $rainfall){
-                $x = (1 - $temperature) * 255;
-                $z = (1 - $rainfall * $temperature) * 255;
-                $c = self::interpolateColor(256, $x, $z, [0x47, 0xd0, 0x33], [0x6c, 0xb4, 0x93], [0xbf, 0xb6, 0x55], [0x80, 0xb4, 0x97]);
-                return ((int) ($c[0] << 16)) | (int) (($c[1] << 8)) | (int) ($c[2]);
-        }
+	private static function generateBiomeColor($temperature, $rainfall){
+		$x = (1 - $temperature) * 255;
+		$z = (1 - $rainfall * $temperature) * 255;
+		$c = self::interpolateColor(256, $x, $z, [0x47, 0xd0, 0x33], [0x6c, 0xb4, 0x93], [0xbf, 0xb6, 0x55], [0x80, 0xb4, 0x97]);
+		return (((int) $c[0]) << 16) | (((int) $c[1]) << 8) | ((int) $c[2]);
+	}
 
         private static function interpolateColor($size, $x, $z, $c1, $c2, $c3, $c4){
                 $l1 = self::lerpColor($c1, $c2, $x / $size);

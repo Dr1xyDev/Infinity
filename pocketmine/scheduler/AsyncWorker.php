@@ -1,16 +1,17 @@
 <?php
-/*    
- * ░▀█▀░█▀█░█▀▀░▀█▀░█▀█░▀█▀░▀█▀░█░█    
- * ░░█░░█░█░█▀▀░░█░░█░█░░█░░░█░░░█░    
+
+/*
+ * ░▀█▀░█▀█░█▀▀░▀█▀░█▀█░▀█▀░▀█▀░█░█
+ * ░░█░░█░█░█▀▀░░█░░█░█░░█░░░█░░░█░
  * ░▀▀▀░▀░▀░▀░░░▀▀▀░▀░▀░▀▀▀░░▀░░░▀░v1.1
- *               InfinityProject By @Dr1xyDev    
- *   YT:         @Dr1xyDev    
- *   GitHub:     github.com/Dr1xyDev/Infinity    
+ *               InfinityProject By @Dr1xyDev
+ *   YT:         @Dr1xyDev
+ *   GitHub:     github.com/Dr1xyDev/Infinity
 */
 
 namespace pocketmine\scheduler;
 
-use pocketmine\Worker;
+use pocketmine\thread\Worker;
 
 class AsyncWorker extends Worker{
 
@@ -22,8 +23,8 @@ class AsyncWorker extends Worker{
 		$this->id = $id;
 	}
 
-	public function run(){
-		$this->registerClassLoader();
+	public function onRun() : void{
+		$this->registerClassLoaders();
 		gc_enable();
 		ini_set("memory_limit", -1);
 
@@ -35,7 +36,7 @@ class AsyncWorker extends Worker{
 		$this->logger->logException($e);
 	}
 
-	public function getThreadName(){
+	public function getThreadName() : string{
 		return "Asynchronous Worker #" . $this->id;
 	}
 }

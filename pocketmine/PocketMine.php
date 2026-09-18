@@ -60,6 +60,7 @@ namespace pocketmine {
 	use pocketmine\utils\Terminal;
 	use pocketmine\utils\Utils;
 	use pocketmine\wizard\Installer;
+	use pocketmine\thread\ThreadManager;
 
 	const VERSION = "v1.1"; 
 	const API_VERSION = "2.0.0";
@@ -76,14 +77,14 @@ namespace pocketmine {
 		@define('pocketmine\PATH', \getcwd() . DIRECTORY_SEPARATOR);
 	}
 
-	if(version_compare("8.0.0", PHP_VERSION) > 0){
-		echo "[CRITICAL] This software requires PHP 8.0+, but you have PHP " . PHP_VERSION . "." . PHP_EOL;
+	if(version_compare("8.3.0", PHP_VERSION) > 0){
+		echo "[CRITICAL] This software requires PHP 8.3+, but you have PHP " . PHP_VERSION . "." . PHP_EOL;
 		echo "[CRITICAL] Please use the installer provided on the homepage." . PHP_EOL;
 		exit(1);
 	}
 
-	if(!extension_loaded("pthreads")){
-		echo "[CRITICAL] Unable to find the pthreads extension." . PHP_EOL;
+	if(!extension_loaded("pmmpthread")){
+		echo "[CRITICAL] Unable to find the pmmpthread extension (fork of pthreads for PHP 8.3+)." . PHP_EOL;
 		echo "[CRITICAL] Please use the installer provided on the homepage." . PHP_EOL;
 		exit(1);
 	}
@@ -351,12 +352,12 @@ namespace pocketmine {
 		++$errors;
 	}
 
-	$pthreads_version = phpversion("pthreads");
-	if(substr_count($pthreads_version, ".") < 2){
-		$pthreads_version = "0.$pthreads_version";
+	$pmmpthread_version = phpversion("pmmpthread");
+	if(substr_count($pmmpthread_version, ".") < 2){
+		$pmmpthread_version = "0.$pmmpthread_version";
 	}
-	if(version_compare($pthreads_version, "3.2.0") < 0){
-		$logger->critical("pthreads >= 3.2.0 is required, while you have $pthreads_version.");
+	if(version_compare($pmmpthread_version, "6.0.0") < 0){
+		$logger->critical("pmmpthread >= 6.0.0 is required, while you have $pmmpthread_version.");
 		++$errors;
 	}
 
@@ -433,8 +434,12 @@ namespace pocketmine {
 	$logger->info("Stopping other threads");
 
 	foreach(ThreadManager::getInstance()->getAll() as $id => $thread){
-		$logger->debug("Stopping " . (new \ReflectionClass($thread))->getShortName() . " thread");
-		$thread->quit();
+		$logger->debug("Stopping " . $thread->getThreadName() . " thread");
+		try{
+			$thread->quit();
+		}catch(\Throwable $e){
+			$logger->debug("Could not stop " . $thread->getThreadName() . " thread: " . $e->getMessage());
+		}
 	}
 
 	$killer = new ServerKiller(8);

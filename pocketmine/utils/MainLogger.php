@@ -1,18 +1,19 @@
 <?php
-/*    
- * ░▀█▀░█▀█░█▀▀░▀█▀░█▀█░▀█▀░▀█▀░█░█    
- * ░░█░░█░█░█▀▀░░█░░█░█░░█░░░█░░░█░    
+
+/*
+ * ░▀█▀░█▀█░█▀▀░▀█▀░█▀█░▀█▀░▀█▀░█░█
+ * ░░█░░█░█░█▀▀░░█░░█░█░░█░░░█░░░█░
  * ░▀▀▀░▀░▀░▀░░░▀▀▀░▀░▀░▀▀▀░░▀░░░▀░v1.1
- *               InfinityProject By @Dr1xyDev    
- *   YT:         @Dr1xyDev    
- *   GitHub:     github.com/Dr1xyDev/Infinity    
+ *               InfinityProject By @Dr1xyDev
+ *   YT:         @Dr1xyDev
+ *   GitHub:     github.com/Dr1xyDev/Infinity
 */
 
 namespace pocketmine\utils;
 
 use LogLevel;
-use pocketmine\Thread;
-use pocketmine\Worker;
+use pocketmine\thread\Thread;
+use pocketmine\thread\Worker;
 
 class MainLogger extends \AttachableThreadedLogger{
 	protected $logFile;
@@ -53,8 +54,8 @@ class MainLogger extends \AttachableThreadedLogger{
 		touch($logFile);
 		$this->logFile = $logFile;
 		$this->logDebug = (bool) $logDebug;
-		$this->logStream = new \Threaded;
-		$this->start();
+		$this->logStream = new \pmmp\thread\ThreadSafeArray;
+		$this->start(\pmmp\thread\Thread::INHERIT_ALL);
 	}
 
 	
@@ -181,7 +182,8 @@ class MainLogger extends \AttachableThreadedLogger{
 	protected function send($message, $level, $prefix, $color){
 		$now = time();
 
-		$thread = \Thread::getCurrentThread();
+		$threadName = null;
+		$thread = Thread::getCurrentThread();
 		if($thread === null){
 			$threadName = "Server thread";
 		}elseif($thread instanceof Thread or $thread instanceof Worker){
@@ -226,7 +228,7 @@ class MainLogger extends \AttachableThreadedLogger{
 
 	
 
-	public function run(){
+	public function onRun() : void{
 		$this->shutdown = false;
 		while($this->shutdown === false){
 			$this->synchronized(function(){

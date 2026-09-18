@@ -25,6 +25,7 @@ class RCON{
 	
 	private $workers = [];
 	private $clientsPerThread;
+	private $threads;
 
 	public function __construct(Server $server, $password, $port = 19132, $interface = "0.0.0.0", $threads = 1, $clientsPerThread = 50){
 		$this->server = $server;
@@ -83,7 +84,7 @@ class RCON{
 				$this->workers[$n]->serverStatus = $serverStatus;
 			}
 			if($this->workers[$n]->isTerminated() === true){
-				$this->workers[$n] = new RCONInstance($this->socket, $this->password, $this->clientsPerThread);
+				$this->workers[$n] = new RCONInstance($this->server->getLogger(), $this->socket, $this->password, $this->clientsPerThread);
 			}elseif($this->workers[$n]->isWaiting()){
 				if($this->workers[$n]->response !== ""){
 					$this->server->getLogger()->info($this->workers[$n]->response);

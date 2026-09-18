@@ -15,6 +15,7 @@ use pocketmine\command\CommandReader;
 use pocketmine\command\CommandSender;
 use pocketmine\command\ConsoleCommandSender;
 use pocketmine\command\PluginIdentifiableCommand;
+use pocketmine\thread\ThreadManager;
 use pocketmine\command\SimpleCommandMap;
 use pocketmine\entity\Arrow;
 use pocketmine\entity\Attribute;
@@ -1016,8 +1017,8 @@ class Server{
 
                 $this->getLogger()->notice($this->getLanguage()->translateString("pocketmine.level.backgroundGeneration", [$name]));
 
-                $centerX = $level->getSpawnLocation()->getX() >> 4;
-                $centerZ = $level->getSpawnLocation()->getZ() >> 4;
+                $centerX = (int) $level->getSpawnLocation()->getX() >> 4;
+                $centerZ = (int) $level->getSpawnLocation()->getZ() >> 4;
 
                 $order = [];
 
@@ -1247,7 +1248,6 @@ class Server{
                         Server::$sleeper->wait($ms);
                 }, $microseconds);
         }
-
         public function about(){
                 $string = '
 
@@ -1358,7 +1358,7 @@ class Server{
         
         public function __construct(\ClassLoader $autoloader, \ThreadedLogger $logger, $filePath, $dataPath, $pluginPath, $defaultLang = "unknown"){
                 self::$instance = $this;
-                self::$sleeper = new \Threaded;
+                self::$sleeper = new \pmmp\thread\ThreadSafe;
                 $this->autoloader = $autoloader;
                 $this->logger = $logger;
                 $this->filePath = $filePath;

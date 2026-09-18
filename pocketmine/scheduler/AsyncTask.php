@@ -1,18 +1,19 @@
 <?php
-/*    
- * ░▀█▀░█▀█░█▀▀░▀█▀░█▀█░▀█▀░▀█▀░█░█    
- * ░░█░░█░█░█▀▀░░█░░█░█░░█░░░█░░░█░    
+
+/*
+ * ░▀█▀░█▀█░█▀▀░▀█▀░█▀█░▀█▀░▀█▀░█░█
+ * ░░█░░█░█░█▀▀░░█░░█░█░░█░░░█░░░█░
  * ░▀▀▀░▀░▀░▀░░░▀▀▀░▀░▀░▀▀▀░░▀░░░▀░v1.1
- *               InfinityProject By @Dr1xyDev    
- *   YT:         @Dr1xyDev    
- *   GitHub:     github.com/Dr1xyDev/Infinity    
+ *               InfinityProject By @Dr1xyDev
+ *   YT:         @Dr1xyDev
+ *   GitHub:     github.com/Dr1xyDev/Infinity
 */
 
 namespace pocketmine\scheduler;
 
 use pocketmine\Server;
 
-abstract class AsyncTask extends \Threaded implements \Collectable{
+abstract class AsyncTask extends \pmmp\thread\Runnable{
 
 	
 	public $worker = null;
@@ -41,7 +42,7 @@ abstract class AsyncTask extends \Threaded implements \Collectable{
 		return $this->isFinished;
 	}
 
-	public function run(){
+	public function run() : void{
 		$this->result = null;
 		$this->isGarbage = false;
 
@@ -50,12 +51,18 @@ abstract class AsyncTask extends \Threaded implements \Collectable{
 				$this->onRun();
 			}catch(\Throwable $e){
 				$this->crashed = true;
-				$this->worker->handleException($e);
+				$worker = \pmmp\thread\Thread::getCurrentThread();
+				if($worker instanceof \pocketmine\scheduler\AsyncWorker){
+					$worker->handleException($e);
+				}
 			}
 		}
 
 		$this->isFinished = true;
 		
+	}
+
+	public function onRun(){
 	}
 
 	public function isCrashed(){
@@ -109,16 +116,18 @@ abstract class AsyncTask extends \Threaded implements \Collectable{
 	}
 
 	
-	public abstract function onRun();
-
-	
 	public function onCompletion(Server $server){
 
 	}
 
 	public function cleanObject(){
 		foreach($this as $p => $v){
-			if(!($v instanceof \Threaded) and !in_array($p, ["isFinished", "isGarbage", "cancelRun"])){
+			if($p === "" or $p[0] === "\0"){
+				//skip mangled private/protected property names from parent classes; foreach($this)
+				//exposes them like this when iterated from within a base class method in PHP 8+
+				continue;
+			}
+			if(!($v instanceof \pmmp\thread\ThreadSafe) and !in_array($p, ["isFinished", "isGarbage", "cancelRun"])){
 				$this->{$p} = null;
 			}
 		}

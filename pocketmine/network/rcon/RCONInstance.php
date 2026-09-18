@@ -1,16 +1,17 @@
 <?php
-/*    
- * ░▀█▀░█▀█░█▀▀░▀█▀░█▀█░▀█▀░▀█▀░█░█    
- * ░░█░░█░█░█▀▀░░█░░█░█░░█░░░█░░░█░    
+
+/*
+ * ░▀█▀░█▀█░█▀▀░▀█▀░█▀█░▀█▀░▀█▀░█░█
+ * ░░█░░█░█░█▀▀░░█░░█░█░░█░░░█░░░█░
  * ░▀▀▀░▀░▀░▀░░░▀▀▀░▀░▀░▀▀▀░░▀░░░▀░v1.1
- *               InfinityProject By @Dr1xyDev    
- *   YT:         @Dr1xyDev    
- *   GitHub:     github.com/Dr1xyDev/Infinity    
+ *               InfinityProject By @Dr1xyDev
+ *   YT:         @Dr1xyDev
+ *   GitHub:     github.com/Dr1xyDev/Infinity
 */
 
 namespace pocketmine\network\rcon;
 
-use pocketmine\Thread;
+use pocketmine\thread\Thread;
 use pocketmine\utils\Binary;
 use pocketmine\utils\MainLogger;
 
@@ -82,7 +83,7 @@ class RCONInstance extends Thread{
 		$this->stop = true;
 	}
 
-	public function run(){
+	public function onRun() : void{
 
 		while($this->stop !== true){
 			$this->synchronized(function(){
@@ -106,13 +107,17 @@ class RCONInstance extends Thread{
 						}
 					}
 					if($done === false){
-						@socket_close($client);
+						try{
+							socket_close($client);
+						}catch(\Throwable $e){
+							//the client may have already closed the connection; best-effort cleanup
+						}
 					}
 				}
 			}
 
 			for($n = 0; $n < $this->maxClients; ++$n){
-				$client = &$this->{"client" . $n};
+				$client = $this->{"client" . $n};
 				if($client !== null){
 					if($this->{"status" . $n} !== -1 and $this->stop !== true){
 						if($this->{"status" . $n} === 0 and $this->{"timeout" . $n} < microtime(true)){ 
@@ -131,7 +136,7 @@ class RCONInstance extends Thread{
 							case 9: 
 								if($this->{"status" . $n} !== 1){
 									$this->{"status" . $n} = -1;
-									continue;
+									continue 2;
 								}
 								$this->writePacket($client, $requestID, 0, RCON::PROTOCOL_VERSION);
 								$this->response = "";
@@ -141,7 +146,7 @@ class RCONInstance extends Thread{
 							case 4: 
 								if($this->{"status" . $n} !== 1){
 									$this->{"status" . $n} = -1;
-									continue;
+									continue 2;
 								}
 								$res = (array) [
 									"serverStatus" => unserialize($this->serverStatus),
@@ -153,7 +158,7 @@ class RCONInstance extends Thread{
 							case 3: 
 								if($this->{"status" . $n} !== 0){
 									$this->{"status" . $n} = -1;
-									continue;
+									continue 2;
 								}
 								if($payload === $this->password){
 									socket_getpeername($client, $addr, $port);
@@ -164,13 +169,13 @@ class RCONInstance extends Thread{
 								}else{
 									$this->{"status" . $n} = -1;
 									$this->writePacket($client, -1, 2, "");
-									continue;
+									continue 2;
 								}
 								break;
 							case 2: 
 								if($this->{"status" . $n} !== 1){
 									$this->{"status" . $n} = -1;
-									continue;
+									continue 2;
 								}
 								if(strlen($payload) > 0){
 									$this->cmd = ltrim($payload);
@@ -187,22 +192,18 @@ class RCONInstance extends Thread{
 						}
 
 					}else{
-						@socket_set_option($client, SOL_SOCKET, SO_LINGER, ["l_onoff" => 1, "l_linger" => 1]);
-						@socket_shutdown($client, 2);
-						@socket_set_block($client);
-						@socket_read($client, 1);
-						@socket_close($client);
-						$this->{"status" . $n} = 0;
+						try{
+							socket_close($client);
+						}catch(\Throwable $e){
+							//the client may have already been closed (e.g. by the OS on connection reset);
+							//this is a best-effort cleanup, so failing to close an already-closed socket is fine
+						}
 						$this->{"client" . $n} = null;
+						$this->{"status" . $n} = 0;
+						$this->{"timeout" . $n} = 0;
 					}
 				}
 			}
 		}
-		unset($this->socket, $this->cmd, $this->response, $this->stop);
-		exit(0);
-	}
-
-	public function getThreadName(){
-		return "RCON";
 	}
 }

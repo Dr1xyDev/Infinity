@@ -1,16 +1,19 @@
 <?php
-/*    
- * ░▀█▀░█▀█░█▀▀░▀█▀░█▀█░▀█▀░▀█▀░█░█    
- * ░░█░░█░█░█▀▀░░█░░█░█░░█░░░█░░░█░    
+
+/*
+ * ░▀█▀░█▀█░█▀▀░▀█▀░█▀█░▀█▀░▀█▀░█░█
+ * ░░█░░█░█░█▀▀░░█░░█░█░░█░░░█░░░█░
  * ░▀▀▀░▀░▀░▀░░░▀▀▀░▀░▀░▀▀▀░░▀░░░▀░v1.1
- *               InfinityProject By @Dr1xyDev    
- *   YT:         @Dr1xyDev    
- *   GitHub:     github.com/Dr1xyDev/Infinity    
+ *               InfinityProject By @Dr1xyDev
+ *   YT:         @Dr1xyDev
+ *   GitHub:     github.com/Dr1xyDev/Infinity
 */
 
 namespace raklib\server;
 
-class RakLibServer extends \Thread{
+use pocketmine\thread\Thread;
+
+class RakLibServer extends Thread{
 	protected $port;
 	protected $interface;
 	
@@ -41,11 +44,16 @@ class RakLibServer extends \Thread{
 		$loadPaths = [];
 		$this->addDependency($loadPaths, new \ReflectionClass($logger));
 		$this->addDependency($loadPaths, new \ReflectionClass($loader));
-		$this->loadPaths = array_reverse($loadPaths);
+		$loadPaths = array_reverse($loadPaths);
+		//pmmp\thread\Thread instance properties can't hold plain PHP arrays; use a thread-safe array instead
+		$this->loadPaths = new \pmmp\thread\ThreadSafeArray;
+		foreach($loadPaths as $name => $path){
+			$this->loadPaths[$name] = $path;
+		}
 		$this->shutdown = false;
 
-		$this->externalQueue = new \Threaded;
-		$this->internalQueue = new \Threaded;
+		$this->externalQueue = new \pmmp\thread\ThreadSafeArray;
+		$this->internalQueue = new \pmmp\thread\ThreadSafeArray;
 
 		if(\Phar::running(true) !== ""){
 			$this->mainPath = \Phar::running(true);
@@ -193,7 +201,7 @@ class RakLibServer extends \Thread{
 		return rtrim(str_replace(["\\", ".php", "phar://", rtrim(str_replace(["\\", "phar://"], ["/", ""], $this->mainPath), "/")], ["/", "", "", ""], $path), "/");
 	}
 
-	public function run(){
+	public function onRun() : void{
 		foreach($this->loadPaths as $name => $path){
 			if(!class_exists($name, false) and !interface_exists($name, false)){
 				require($path);

@@ -1,14 +1,15 @@
 <?php
-/*    
- * ░▀█▀░█▀█░█▀▀░▀█▀░█▀█░▀█▀░▀█▀░█░█    
- * ░░█░░█░█░█▀▀░░█░░█░█░░█░░░█░░░█░    
+
+/*
+ * ░▀█▀░█▀█░█▀▀░▀█▀░█▀█░▀█▀░▀█▀░█░█
+ * ░░█░░█░█░█▀▀░░█░░█░█░░█░░░█░░░█░
  * ░▀▀▀░▀░▀░▀░░░▀▀▀░▀░▀░▀▀▀░░▀░░░▀░v1.1
- *               InfinityProject By @Dr1xyDev    
- *   YT:         @Dr1xyDev    
- *   GitHub:     github.com/Dr1xyDev/Infinity    
+ *               InfinityProject By @Dr1xyDev
+ *   YT:         @Dr1xyDev
+ *   GitHub:     github.com/Dr1xyDev/Infinity
 */
 
-class BaseClassLoader extends \Threaded implements ClassLoader{
+class BaseClassLoader extends \pmmp\thread\ThreadSafe implements ClassLoader{
 
     
     private $parent;
@@ -20,8 +21,8 @@ class BaseClassLoader extends \Threaded implements ClassLoader{
     
     public function __construct(ClassLoader $parent = null){
         $this->parent = $parent;
-        $this->lookup = new \Threaded;
-        $this->classes = new \Threaded;
+        $this->lookup = new \pmmp\thread\ThreadSafeArray;
+        $this->classes = new \pmmp\thread\ThreadSafeArray;
     }
 
     
@@ -48,8 +49,8 @@ class BaseClassLoader extends \Threaded implements ClassLoader{
     
     protected function getAndRemoveLookupEntries(){
 		$entries = [];
-		while($this->count() > 0){
-			$entries[] = $this->shift();
+		while($this->lookup->count() > 0){
+			$entries[] = $this->lookup->shift();
 		}
 		return $entries;
 	}

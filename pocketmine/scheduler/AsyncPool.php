@@ -37,7 +37,7 @@ class AsyncPool{
 		for($i = 0; $i < $this->size; ++$i){
 			$this->workerUsage[$i] = 0;
 			$this->workers[$i] = new AsyncWorker($this->server->getLogger(), $i + 1);
-			$this->workers[$i]->setClassLoader($this->server->getLoader());
+			$this->workers[$i]->setClassLoaders([$this->server->getLoader()]);
 			$this->workers[$i]->start();
 		}
 	}
@@ -52,7 +52,7 @@ class AsyncPool{
 			for($i = $this->size; $i < $newSize; ++$i){
 				$this->workerUsage[$i] = 0;
 				$this->workers[$i] = new AsyncWorker($this->server->getLogger(), $i + 1);
-				$this->workers[$i]->setClassLoader($this->server->getLoader());
+				$this->workers[$i]->setClassLoaders([$this->server->getLoader()]);
 				$this->workers[$i]->start();
 			}
 			$this->size = $newSize;

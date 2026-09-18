@@ -2357,8 +2357,8 @@ class Level implements ChunkManager, Metadatable{
 
 	
 	public function isSpawnChunk(int $X, int $Z) : bool{
-		$spawnX = $this->provider->getSpawn()->getX() >> 4;
-		$spawnZ = $this->provider->getSpawn()->getZ() >> 4;
+		$spawnX = (int) $this->provider->getSpawn()->getX() >> 4;
+		$spawnZ = (int) $this->provider->getSpawn()->getZ() >> 4;
 
 		return abs($X - $spawnX) <= 1 and abs($Z - $spawnZ) <= 1;
 	}

@@ -28,9 +28,10 @@ class GroundCover extends Populator{
      * en todo momento; solo cambia la capa superficial).
      */
     private static function valueNoise(int $x, int $z, int $seed) : float{
-        $h = $x * 374761393 ^ $z * 668265263 ^ $seed;
-        $h = ($h ^ ($h >> 13)) * 1274126177;
-        $h = $h ^ ($h >> 16);
+        $mask = 0xFFFFFFFF;
+        $h = ((($x * 374761393) & $mask) ^ (($z * 668265263) & $mask) ^ $seed) & $mask;
+        $h = ((($h ^ ($h >> 13)) & $mask) * 1274126177) & $mask;
+        $h = ($h ^ ($h >> 16)) & $mask;
         return (($h & 0x7FFFFFFF) % 1000) / 1000.0;
     }
 
