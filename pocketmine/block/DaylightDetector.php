@@ -2,7 +2,7 @@
 /*    
  * ░▀█▀░█▀█░█▀▀░▀█▀░█▀█░▀█▀░▀█▀░█░█    
  * ░░█░░█░█░█▀▀░░█░░█░█░░█░░░█░░░█░    
- * ░▀▀▀░▀░▀░▀░░░▀▀▀░▀░▀░▀▀▀░░▀░░░▀░v1.1
+ * ░▀▀▀░▀░▀░▀░░░▀▀▀░▀░▀░▀▀▀░░▀░░░▀░v1.2 Release
  *               InfinityProject By @Dr1xyDev    
  *   YT:         @Dr1xyDev    
  *   GitHub:     github.com/Dr1xyDev/Infinity    
@@ -57,13 +57,13 @@ class DaylightDetector extends RedstoneSource{
 		}
 	}
 
-	public function onActivate(Item $item, Player $player = null){
+	public function onActivate(Item $item, ?Player $player = null){
 		$this->getLevel()->setBlock($this, new DaylightDetectorInverted(), true, true);
 		$this->getTile()->onUpdate();
 		return true;
 	}
 
-	public function isActivated(Block $from = null){
+	public function isActivated(?Block $from = null){
 		return $this->getTile()->isActivated();
 	}
 

@@ -2,7 +2,7 @@
 /*    
  * ░▀█▀░█▀█░█▀▀░▀█▀░█▀█░▀█▀░▀█▀░█░█    
  * ░░█░░█░█░█▀▀░░█░░█░█░░█░░░█░░░█░    
- * ░▀▀▀░▀░▀░▀░░░▀▀▀░▀░▀░▀▀▀░░▀░░░▀░v1.1
+ * ░▀▀▀░▀░▀░▀░░░▀▀▀░▀░▀░▀▀▀░░▀░░░▀░v1.2 Release
  *               InfinityProject By @Dr1xyDev    
  *   YT:         @Dr1xyDev    
  *   GitHub:     github.com/Dr1xyDev/Infinity    
@@ -64,7 +64,7 @@ class WoodSlab extends Transparent{
 		}
 	}
 
-	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, Player $player = null){
+	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, ?Player $player = null){
 		$this->meta &= 0x07;
 		if($face === 0){
 			if($target->getId() === self::WOOD_SLAB and ($target->getDamage() & 0x08) === 0x08 and ($target->getDamage() & 0x07) === ($this->meta & 0x07)){

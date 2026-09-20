@@ -2,7 +2,7 @@
 /*    
  * ░▀█▀░█▀█░█▀▀░▀█▀░█▀█░▀█▀░▀█▀░█░█    
  * ░░█░░█░█░█▀▀░░█░░█░█░░█░░░█░░░█░    
- * ░▀▀▀░▀░▀░▀░░░▀▀▀░▀░▀░▀▀▀░░▀░░░▀░v1.1
+ * ░▀▀▀░▀░▀░▀░░░▀▀▀░▀░▀░▀▀▀░░▀░░░▀░v1.2 Release
  *               InfinityProject By @Dr1xyDev    
  *   YT:         @Dr1xyDev    
  *   GitHub:     github.com/Dr1xyDev/Infinity    
@@ -34,7 +34,7 @@ class SimpleTransactionQueue implements TransactionQueue{
 	protected $transactionCount = 0;
 
 	
-	public function __construct(Player $player = null){
+	public function __construct(?Player $player = null){
 		$this->player = $player;
 		$this->transactionQueue = new \SplQueue();
 		$this->transactionsToRetry = new \SplQueue();

@@ -2,7 +2,7 @@
 /*    
  * ░▀█▀░█▀█░█▀▀░▀█▀░█▀█░▀█▀░▀█▀░█░█    
  * ░░█░░█░█░█▀▀░░█░░█░█░░█░░░█░░░█░    
- * ░▀▀▀░▀░▀░▀░░░▀▀▀░▀░▀░▀▀▀░░▀░░░▀░v1.1
+ * ░▀▀▀░▀░▀░▀░░░▀▀▀░▀░▀░▀▀▀░░▀░░░▀░v1.2 Release
  *               InfinityProject By @Dr1xyDev    
  *   YT:         @Dr1xyDev    
  *   GitHub:     github.com/Dr1xyDev/Infinity    
@@ -213,7 +213,7 @@ class RedstoneTorch extends RedstoneSource{
 		$this->getLevel()->setBlockTempData($this);
 	}
 
-	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, Player $player = null){
+	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, ?Player $player = null){
 		$below = $this->getSide(0);
 
 		if($target->isTransparent() === false and $face !== 0){
@@ -249,7 +249,7 @@ class RedstoneTorch extends RedstoneSource{
 		];
 	}
 
-	public function isActivated(Block $from = null){
+	public function isActivated(?Block $from = null){
 		return true;
 	}
 }

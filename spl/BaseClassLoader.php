@@ -1,12 +1,12 @@
 <?php
 
-/*
- * ░▀█▀░█▀█░█▀▀░▀█▀░█▀█░▀█▀░▀█▀░█░█
- * ░░█░░█░█░█▀▀░░█░░█░█░░█░░░█░░░█░
- * ░▀▀▀░▀░▀░▀░░░▀▀▀░▀░▀░▀▀▀░░▀░░░▀░v1.1
- *               InfinityProject By @Dr1xyDev
- *   YT:         @Dr1xyDev
- *   GitHub:     github.com/Dr1xyDev/Infinity
+/*    
+ * ░▀█▀░█▀█░█▀▀░▀█▀░█▀█░▀█▀░▀█▀░█░█    
+ * ░░█░░█░█░█▀▀░░█░░█░█░░█░░░█░░░█░    
+ * ░▀▀▀░▀░▀░▀░░░▀▀▀░▀░▀░▀▀▀░░▀░░░▀░v1.2 Release
+ *               InfinityProject By @Dr1xyDev    
+ *   YT:         @Dr1xyDev    
+ *   GitHub:     github.com/Dr1xyDev/Infinity    
 */
 
 class BaseClassLoader extends \pmmp\thread\ThreadSafe implements ClassLoader{
@@ -19,7 +19,7 @@ class BaseClassLoader extends \pmmp\thread\ThreadSafe implements ClassLoader{
     private $classes;
 
     
-    public function __construct(ClassLoader $parent = null){
+    public function __construct(?ClassLoader $parent = null){
         $this->parent = $parent;
         $this->lookup = new \pmmp\thread\ThreadSafeArray;
         $this->classes = new \pmmp\thread\ThreadSafeArray;

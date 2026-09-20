@@ -2,7 +2,7 @@
 /*    
  * ░▀█▀░█▀█░█▀▀░▀█▀░█▀█░▀█▀░▀█▀░█░█    
  * ░░█░░█░█░█▀▀░░█░░█░█░░█░░░█░░░█░    
- * ░▀▀▀░▀░▀░▀░░░▀▀▀░▀░▀░▀▀▀░░▀░░░▀░v1.1
+ * ░▀▀▀░▀░▀░▀░░░▀▀▀░▀░▀░▀▀▀░░▀░░░▀░v1.2 Release
  *               InfinityProject By @Dr1xyDev    
  *   YT:         @Dr1xyDev    
  *   GitHub:     github.com/Dr1xyDev/Infinity    
@@ -410,7 +410,7 @@ abstract class BaseFullChunk implements FullChunk{
                 $this->hasChanged = (bool) $changed;
         }
 
-        public static function fromFastBinary($data, LevelProvider $provider = null){
+        public static function fromFastBinary($data, ?LevelProvider $provider = null){
                 return static::fromBinary($data, $provider);
         }
 

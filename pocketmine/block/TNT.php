@@ -2,7 +2,7 @@
 /*    
  * ░▀█▀░█▀█░█▀▀░▀█▀░█▀█░▀█▀░▀█▀░█░█    
  * ░░█░░█░█░█▀▀░░█░░█░█░░█░░░█░░░█░    
- * ░▀▀▀░▀░▀░▀░░░▀▀▀░▀░▀░▀▀▀░░▀░░░▀░v1.1
+ * ░▀▀▀░▀░▀░▀░░░▀▀▀░▀░▀░▀▀▀░░▀░░░▀░v1.2 Release
  *               InfinityProject By @Dr1xyDev    
  *   YT:         @Dr1xyDev    
  *   GitHub:     github.com/Dr1xyDev/Infinity    
@@ -51,7 +51,7 @@ class TNT extends Solid implements ElectricalAppliance{
 		return 100;
 	}
 
-	public function prime(Player $player = null){
+	public function prime(?Player $player = null){
 		$this->meta = 1;
 		if($player != null and $player->isCreative()){
 			$dropItem = false;
@@ -97,13 +97,13 @@ class TNT extends Solid implements ElectricalAppliance{
 		return false;
 	}
 
-	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, Player $player = null){
+	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, ?Player $player = null){
 		$this->getLevel()->setBlock($this, $this, true, false);
 
 		$this->getLevel()->scheduleUpdate($this, 40);
 	}
 
-	public function onActivate(Item $item, Player $player = null){
+	public function onActivate(Item $item, ?Player $player = null){
 		if($item->getId() === Item::FLINT_STEEL){
 			$this->prime($player);
 			$this->getLevel()->setBlock($this, new Air(), true);

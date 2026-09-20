@@ -2,7 +2,7 @@
 /*    
  * ░▀█▀░█▀█░█▀▀░▀█▀░█▀█░▀█▀░▀█▀░█░█    
  * ░░█░░█░█░█▀▀░░█░░█░█░░█░░░█░░░█░    
- * ░▀▀▀░▀░▀░▀░░░▀▀▀░▀░▀░▀▀▀░░▀░░░▀░v1.1
+ * ░▀▀▀░▀░▀░▀░░░▀▀▀░▀░▀░▀▀▀░░▀░░░▀░v1.2 Release
  *               InfinityProject By @Dr1xyDev    
  *   YT:         @Dr1xyDev    
  *   GitHub:     github.com/Dr1xyDev/Infinity    
@@ -38,7 +38,7 @@ class Creeper extends Monster{
 		$this->setDataProperty(self::DATA_POWERED, self::DATA_TYPE_BYTE, $this->isPowered() ? 1 : 0);
 	}
 
-	public function setPowered(bool $powered, Lightning $lightning = null){
+	public function setPowered(bool $powered, ?Lightning $lightning = null){
 		if($lightning != null){
 			$powered = true;
 			$cause = CreeperPowerEvent::CAUSE_LIGHTNING;

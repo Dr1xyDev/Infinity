@@ -2,7 +2,7 @@
 /*    
  * ░▀█▀░█▀█░█▀▀░▀█▀░█▀█░▀█▀░▀█▀░█░█    
  * ░░█░░█░█░█▀▀░░█░░█░█░░█░░░█░░░█░    
- * ░▀▀▀░▀░▀░▀░░░▀▀▀░▀░▀░▀▀▀░░▀░░░▀░v1.1
+ * ░▀▀▀░▀░▀░▀░░░▀▀▀░▀░▀░▀▀▀░░▀░░░▀░v1.2 Release
  *               InfinityProject By @Dr1xyDev    
  *   YT:         @Dr1xyDev    
  *   GitHub:     github.com/Dr1xyDev/Infinity    
@@ -40,7 +40,7 @@ interface ChunkManager{
 	public function getChunk(int $chunkX, int $chunkZ);
 
 	
-	public function setChunk(int $chunkX, int $chunkZ, FullChunk $chunk = null);
+	public function setChunk(int $chunkX, int $chunkZ, ?FullChunk $chunk = null);
 
 	
 	public function getSeed();

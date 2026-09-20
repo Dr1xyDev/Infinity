@@ -2,7 +2,7 @@
 /*    
  * ░▀█▀░█▀█░█▀▀░▀█▀░█▀█░▀█▀░▀█▀░█░█    
  * ░░█░░█░█░█▀▀░░█░░█░█░░█░░░█░░░█░    
- * ░▀▀▀░▀░▀░▀░░░▀▀▀░▀░▀░▀▀▀░░▀░░░▀░v1.1
+ * ░▀▀▀░▀░▀░▀░░░▀▀▀░▀░▀░▀▀▀░░▀░░░▀░v1.2 Release
  *               InfinityProject By @Dr1xyDev    
  *   YT:         @Dr1xyDev    
  *   GitHub:     github.com/Dr1xyDev/Infinity    
@@ -29,7 +29,7 @@ class Chunk extends BaseFullChunk{
 	
 	protected $nbt;
 
-	public function __construct($level, CompoundTag $nbt = null){
+	public function __construct($level, ?CompoundTag $nbt = null){
 		if($nbt === null){
 			$this->provider = $level;
 			$this->nbt = new CompoundTag("Level", []);
@@ -274,7 +274,7 @@ class Chunk extends BaseFullChunk{
 	}
 
 	
-	public static function fromBinary($data, LevelProvider $provider = null){
+	public static function fromBinary($data, ?LevelProvider $provider = null){
 		$nbt = new NBT(NBT::BIG_ENDIAN);
 
 		try{
@@ -291,7 +291,7 @@ class Chunk extends BaseFullChunk{
 		}
 	}
 	
-	public static function fromFastBinary($data, LevelProvider $provider = null){
+	public static function fromFastBinary($data, ?LevelProvider $provider = null){
 
 		try{
 			$offset = 0;
@@ -402,7 +402,7 @@ class Chunk extends BaseFullChunk{
 	}
 
 	
-	public static function getEmptyChunk($chunkX, $chunkZ, LevelProvider $provider = null){
+	public static function getEmptyChunk($chunkX, $chunkZ, ?LevelProvider $provider = null){
 		try{
 			$chunk = new Chunk($provider instanceof LevelProvider ? $provider : McRegion::class, null);
 			$chunk->x = $chunkX;

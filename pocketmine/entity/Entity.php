@@ -2,7 +2,7 @@
 /*    
  * ░▀█▀░█▀█░█▀▀░▀█▀░█▀█░▀█▀░▀█▀░█░█    
  * ░░█░░█░█░█▀▀░░█░░█░█░░█░░░█░░░█░    
- * ░▀▀▀░▀░▀░▀░░░▀▀▀░▀░▀░▀▀▀░░▀░░░▀░v1.1
+ * ░▀▀▀░▀░▀░▀░░░▀▀▀░▀░▀░▀▀▀░░▀░░░▀░v1.2 Release
  *               InfinityProject By @Dr1xyDev    
  *   YT:         @Dr1xyDev    
  *   GitHub:     github.com/Dr1xyDev/Infinity    
@@ -582,7 +582,7 @@ abstract class Entity extends Location implements Metadatable{
         }
 
         
-        public function sendData($player, array $data = null){
+        public function sendData($player, ?array $data = null){
                 $pk = new SetEntityDataPacket();
                 $pk->eid = ($player === $this ? 0 : $this->getId());
                 $pk->metadata = $data === null ? $this->dataProperties : $data;

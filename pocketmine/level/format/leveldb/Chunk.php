@@ -2,7 +2,7 @@
 /*    
  * ░▀█▀░█▀█░█▀▀░▀█▀░█▀█░▀█▀░▀█▀░█░█    
  * ░░█░░█░█░█▀▀░░█░░█░█░░█░░░█░░░█░    
- * ░▀▀▀░▀░▀░▀░░░▀▀▀░▀░▀░▀▀▀░░▀░░░▀░v1.1
+ * ░▀▀▀░▀░▀░▀░░░▀▀▀░▀░▀░▀▀▀░░▀░░░▀░v1.2 Release
  *               InfinityProject By @Dr1xyDev    
  *   YT:         @Dr1xyDev    
  *   GitHub:     github.com/Dr1xyDev/Infinity    
@@ -25,7 +25,7 @@ class Chunk extends BaseFullChunk{
 	protected $isPopulated = false;
 	protected $isGenerated = false;
 
-	public function __construct($level, $chunkX, $chunkZ, $terrain, array $entityData = null, array $tileData = null){
+	public function __construct($level, $chunkX, $chunkZ, $terrain, ?array $entityData = null, ?array $tileData = null){
 		$offset = 0;
 
 		$blocks = substr($terrain, $offset, 32768);
@@ -212,12 +212,12 @@ class Chunk extends BaseFullChunk{
 		$this->isGenerated = (bool) $value;
 	}
 
-	public static function fromFastBinary($data, LevelProvider $provider = null){
+	public static function fromFastBinary($data, ?LevelProvider $provider = null){
 		return self::fromBinary($data, $provider);
 	}
 
 	
-	public static function fromBinary($data, LevelProvider $provider = null){
+	public static function fromBinary($data, ?LevelProvider $provider = null){
 		try{
 			$chunkX = Binary::readLInt(substr($data, 0, 4));
 			$chunkZ = Binary::readLInt(substr($data, 4, 4));
@@ -347,7 +347,7 @@ class Chunk extends BaseFullChunk{
 	}
 
 	
-	public static function getEmptyChunk($chunkX, $chunkZ, LevelProvider $provider = null){
+	public static function getEmptyChunk($chunkX, $chunkZ, ?LevelProvider $provider = null){
 		try{
 			$chunk = new Chunk($provider instanceof LevelProvider ? $provider : LevelDB::class, $chunkX, $chunkZ, str_repeat("\x00", self::DATA_LENGTH));
 			$chunk->skyLight = str_repeat("\xff", 16384);

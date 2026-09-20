@@ -2,7 +2,7 @@
 /*    
  * ░▀█▀░█▀█░█▀▀░▀█▀░█▀█░▀█▀░▀█▀░█░█    
  * ░░█░░█░█░█▀▀░░█░░█░█░░█░░░█░░░█░    
- * ░▀▀▀░▀░▀░▀░░░▀▀▀░▀░▀░▀▀▀░░▀░░░▀░v1.1
+ * ░▀▀▀░▀░▀░▀░░░▀▀▀░▀░▀░▀▀▀░░▀░░░▀░v1.2 Release
  *               InfinityProject By @Dr1xyDev    
  *   YT:         @Dr1xyDev    
  *   GitHub:     github.com/Dr1xyDev/Infinity    
@@ -2158,14 +2158,14 @@ class Server{
                 }
         }
 
-        public function updatePlayerListData( $uuid, $entityId, $name, $skinId, $skinData, array $players = null){
+        public function updatePlayerListData( $uuid, $entityId, $name, $skinId, $skinData, ?array $players = null){
                 $pk = new PlayerListPacket();
                 $pk->type = PlayerListPacket::TYPE_ADD;
                 $pk->entries[] = [$uuid, $entityId, $name, $skinId, $skinData];
                 Server::broadcastPacket($players === null ? $this->playerList : $players, $pk);
         }
 
-        public function removePlayerListData( $uuid, array $players = null){
+        public function removePlayerListData( $uuid, ?array $players = null){
                 $pk = new PlayerListPacket();
                 $pk->type = PlayerListPacket::TYPE_REMOVE;
                 $pk->entries[] = [$uuid];
@@ -2356,7 +2356,7 @@ class Server{
         }
 
         
-        public function getAdvancedProperty($variable, $defaultValue = null, Config $cfg = null){
+        public function getAdvancedProperty($variable, $defaultValue = null, ?Config $cfg = null){
                 $vars = explode(".", $variable);
                 $base = array_shift($vars);
                 if($cfg == null) $cfg = $this->advancedConfig;

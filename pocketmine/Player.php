@@ -2,7 +2,7 @@
 /*    
  * ░▀█▀░█▀█░█▀▀░▀█▀░█▀█░▀█▀░▀█▀░█░█    
  * ░░█░░█░█░█▀▀░░█░░█░█░░█░░░█░░░█░    
- * ░▀▀▀░▀░▀░▀░░░▀▀▀░▀░▀░▀▀▀░░▀░░░▀░v1.1
+ * ░▀▀▀░▀░▀░▀░░░▀▀▀░▀░▀░▀▀▀░░▀░░░▀░v1.2 Release
  *               InfinityProject By @Dr1xyDev    
  *   YT:         @Dr1xyDev    
  *   GitHub:     github.com/Dr1xyDev/Infinity    
@@ -317,7 +317,7 @@ class Player extends Human implements CommandSender, InventoryHolder, ChunkLoade
                 return $this->fishingHook;
         }
 
-        public function setFishingHook(FishingHook $entity = null){
+        public function setFishingHook(?FishingHook $entity = null){
                 if($entity == null and $this->fishingHook instanceof FishingHook){
                         $this->fishingHook->close();
                 }
@@ -739,7 +739,7 @@ class Player extends Human implements CommandSender, InventoryHolder, ChunkLoade
                 }
         }
 
-        private function unloadChunk($x, $z, Level $level = null){
+        private function unloadChunk($x, $z, ?Level $level = null){
                 $level = $level === null ? $this->level : $level;
                 $index = Level::chunkHash($x, $z);
                 if(isset($this->usedChunks[$index])){
@@ -3743,7 +3743,7 @@ class Player extends Human implements CommandSender, InventoryHolder, ChunkLoade
                 return true;
         }
 
-        public function sendPosition(Vector3 $pos, $yaw = null, $pitch = null, $mode = 0, array $targets = null){
+        public function sendPosition(Vector3 $pos, $yaw = null, $pitch = null, $mode = 0, ?array $targets = null){
                 $yaw = $yaw === null ? $this->yaw : $yaw;
                 $pitch = $pitch === null ? $this->pitch : $pitch;
 

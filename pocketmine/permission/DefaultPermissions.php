@@ -2,7 +2,7 @@
 /*    
  * ░▀█▀░█▀█░█▀▀░▀█▀░█▀█░▀█▀░▀█▀░█░█    
  * ░░█░░█░█░█▀▀░░█░░█░█░░█░░░█░░░█░    
- * ░▀▀▀░▀░▀░▀░░░▀▀▀░▀░▀░▀▀▀░░▀░░░▀░v1.1
+ * ░▀▀▀░▀░▀░▀░░░▀▀▀░▀░▀░▀▀▀░░▀░░░▀░v1.2 Release
  *               InfinityProject By @Dr1xyDev    
  *   YT:         @Dr1xyDev    
  *   GitHub:     github.com/Dr1xyDev/Infinity    
@@ -16,7 +16,7 @@ abstract class DefaultPermissions{
 	const ROOT = "pocketmine";
 
 	
-	public static function registerPermission(Permission $perm, Permission $parent = null){
+	public static function registerPermission(Permission $perm, ?Permission $parent = null){
 		if($parent instanceof Permission){
 			$parent->getChildren()[$perm->getName()] = true;
 

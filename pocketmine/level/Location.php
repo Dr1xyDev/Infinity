@@ -2,7 +2,7 @@
 /*    
  * ░▀█▀░█▀█░█▀▀░▀█▀░█▀█░▀█▀░▀█▀░█░█    
  * ░░█░░█░█░█▀▀░░█░░█░█░░█░░░█░░░█░    
- * ░▀▀▀░▀░▀░▀░░░▀▀▀░▀░▀░▀▀▀░░▀░░░▀░v1.1
+ * ░▀▀▀░▀░▀░▀░░░▀▀▀░▀░▀░▀▀▀░░▀░░░▀░v1.2 Release
  *               InfinityProject By @Dr1xyDev    
  *   YT:         @Dr1xyDev    
  *   GitHub:     github.com/Dr1xyDev/Infinity    
@@ -18,7 +18,7 @@ class Location extends Position{
 	public $pitch;
 
 	
-	public function __construct($x = 0, $y = 0, $z = 0, $yaw = 0.0, $pitch = 0.0, Level $level = null){
+	public function __construct($x = 0, $y = 0, $z = 0, $yaw = 0.0, $pitch = 0.0, ?Level $level = null){
 		$this->x = $x;
 		$this->y = $y;
 		$this->z = $z;
@@ -28,7 +28,7 @@ class Location extends Position{
 	}
 
 	
-	public static function fromObject(Vector3 $pos, Level $level = null, $yaw = 0.0, $pitch = 0.0){
+	public static function fromObject(Vector3 $pos, ?Level $level = null, $yaw = 0.0, $pitch = 0.0){
 		return new Location($pos->x, $pos->y, $pos->z, $yaw, $pitch, ($level === null) ? (($pos instanceof Position) ? $pos->level : null) : $level);
 	}
 

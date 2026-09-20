@@ -2,7 +2,7 @@
 /*    
  * ░▀█▀░█▀█░█▀▀░▀█▀░█▀█░▀█▀░▀█▀░█░█    
  * ░░█░░█░█░█▀▀░░█░░█░█░░█░░░█░░░█░    
- * ░▀▀▀░▀░▀░▀░░░▀▀▀░▀░▀░▀▀▀░░▀░░░▀░v1.1
+ * ░▀▀▀░▀░▀░▀░░░▀▀▀░▀░▀░▀▀▀░░▀░░░▀░v1.2 Release
  *               InfinityProject By @Dr1xyDev    
  *   YT:         @Dr1xyDev    
  *   GitHub:     github.com/Dr1xyDev/Infinity    
@@ -11,8 +11,8 @@
 namespace raklib;
 
 $errors = 0;
-if(version_compare("8.3.0", PHP_VERSION) > 0){
-	echo "[CRITICAL] This software requires PHP 8.3+, but you have PHP " . PHP_VERSION . "." . PHP_EOL;
+if(version_compare("8.4.0", PHP_VERSION) > 0){
+	echo "[CRITICAL] This software requires PHP 8.4+, but you have PHP " . PHP_VERSION . "." . PHP_EOL;
 	++$errors;
 }
 
@@ -22,7 +22,7 @@ if(!extension_loaded("sockets")){
 }
 
 if(!extension_loaded("pmmpthread")){
-	echo "[CRITICAL] Unable to find the pmmpthread extension (fork of pthreads for PHP 8.3+)." . PHP_EOL;
+	echo "[CRITICAL] Unable to find the pmmpthread extension (fork of pthreads for PHP 8.4+)." . PHP_EOL;
 	++$errors;
 }else{
 	$pmmpthread_version = phpversion("pmmpthread");
