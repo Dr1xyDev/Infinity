@@ -2378,14 +2378,14 @@ class Player extends Human implements CommandSender, InventoryHolder, ChunkLoade
 				if($this->teleportPosition !== null or ($this->forceMovement instanceof Vector3 and (($dist = $newPos->distanceSquared($this->forceMovement)) > 0.1 or $revert))){
 					if($this->forceMovement instanceof Vector3) $this->sendPosition($this->forceMovement, $packet->yaw, $packet->pitch);
 				}else{
-					$packet->yaw %= 360;
-					$packet->pitch %= 360;
+					$packet->yaw = fmod($packet->yaw, 360.0);
+					$packet->pitch = fmod($packet->pitch, 360.0);
 
 					if($packet->yaw < 0){
-						$packet->yaw += 360;
+						$packet->yaw += 360.0;
 					}
 
-					$this->setRotation($packet->yaw, $packet->pitch);
+					$this->setRotation((float) $packet->yaw, (float) $packet->pitch);
 					$this->newPosition = $newPos;
 				}
 				$this->forceMovement = null;

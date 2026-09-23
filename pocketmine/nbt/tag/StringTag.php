@@ -36,6 +36,7 @@ class StringTag extends NamedTag{
 	}
 
 	public function write(NBT $nbt){
+		$this->value = (string) $this->value; //PHP 8.4: strlen(null) is deprecated
 		$nbt->putShort(strlen($this->value));
 		$nbt->put($this->value);
 	}

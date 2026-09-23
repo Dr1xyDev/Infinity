@@ -198,6 +198,7 @@ class BinaryStream extends \stdClass{
 
 		$nbt = "";
 
+		$nbt = ""; //PHP 8.4: avoid undefined variable/null flowing into Item::get()
 		if($nbtLen > 0){
 			$nbt = $this->get($nbtLen);
 		}
@@ -218,7 +219,7 @@ class BinaryStream extends \stdClass{
 		$this->putShort($item->getId());
 		$this->putByte($item->getCount());
 		$this->putShort($item->getDamage() === null ? -1 : $item->getDamage());
-		$nbt = $item->getCompoundTag();
+		$nbt = (string) $item->getCompoundTag();
 		$this->putLShort(strlen($nbt));
 		$this->put($nbt);
 
@@ -229,6 +230,7 @@ class BinaryStream extends \stdClass{
 	}
 
 	public function putString($v){
+		$v = (string) $v; //PHP 8.4: strlen(null) is deprecated
 		$this->putShort(strlen($v));
 		$this->put($v);
 	}

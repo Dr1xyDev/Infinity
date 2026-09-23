@@ -631,6 +631,7 @@ class NBT{
 	}
 
 	public function putString($v){
+		$v = (string) $v; //PHP 8.4: strlen(null) is deprecated
 		$this->putShort(strlen($v));
 		$this->buffer .= $v;
 	}
