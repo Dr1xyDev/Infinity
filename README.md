@@ -1,7 +1,7 @@
 # Infinity 👾
 Software de server basado en Genisys 
 Version v1.1 release
-- se añadio soporte php 8.0 completo y únicamente funciona con ese php
+- se añadio soporte php 8.4 completo y únicamente funciona con ese php
 - se añadio generación vanilla
 - se añadio la posibilidad de cargar plugins vía folder
 - se añadieron conandos /makephar <plugin> y /extractphar <plugin_name>
