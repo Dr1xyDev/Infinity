@@ -228,7 +228,7 @@ class Network {
 					throw new \InvalidStateException("Empty or invalid BatchPacket received");
 				}
 				
-				if (($pk = $this->getPacket(ord($buf{0}))) !== null) {
+				if (($pk = $this->getPacket(ord($buf[0]))) !== null) {
 					if ($pk::NETWORK_ID === Info::BATCH_PACKET) {
 						throw new \InvalidStateException("Invalid BatchPacket inside BatchPacket");
 					}

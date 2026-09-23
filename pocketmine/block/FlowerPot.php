@@ -25,7 +25,7 @@ class FlowerPot extends Flowable{
 	protected $id = Block::FLOWER_POT_BLOCK;
 
 	public function __construct($meta = 0){
-		$this->meta = $meta;
+		$this->meta = (int) $meta;
 	}
 
 	public function canBeActivated() : bool {
@@ -47,7 +47,7 @@ class FlowerPot extends Flowable{
 		);
 	}
 
-	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, Player $player = null){
+	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, ?Player $player = null){
 		if($this->getSide(Vector3::SIDE_DOWN)->isTransparent() === false){
 			$this->getLevel()->setBlock($block, $this, true, true);
 			$nbt = new CompoundTag("", [
@@ -65,13 +65,13 @@ class FlowerPot extends Flowable{
 			    }
 		    }
 		    
-			$pot = Tile::createTile("FlowerPot", $this->getLevel()->getChunk($this->x >> 4, $this->z >> 4), $nbt);
+			$pot = Tile::createTile("FlowerPot", $this->getLevel()->getChunk((int) $this->x >> 4, (int) $this->z >> 4), $nbt);
 			return true;
 		}
 		return false;
 	}
 
-	public function onActivate(Item $item, Player $player = null){
+	public function onActivate(Item $item, ?Player $player = null){
 		$tile = $this->getLevel()->getTile($this);
 		if($tile instanceof FlowerPotTile){
 			if($tile->getFlowerPotItem() === Item::AIR){

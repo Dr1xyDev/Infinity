@@ -31,7 +31,7 @@ class BrownMushroomBlock extends Solid{
 	protected $id = self::BROWN_MUSHROOM_BLOCK;
 
 	public function __construct($meta = 14){
-		$this->meta = $meta;
+		$this->meta = (int) $meta;
 	}
 
 	public function canBeActivated() : bool {

@@ -35,7 +35,7 @@ class Lava extends Liquid{
 	protected $id = self::LAVA;
 
 	public function __construct($meta = 0){
-		$this->meta = $meta;
+		$this->meta = (int) $meta;
 	}
 
 	public function getLightLevel(){
@@ -66,7 +66,7 @@ class Lava extends Liquid{
 		$entity->resetFallDistance();
 	}
 
-	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, Player $player = null){
+	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, ?Player $player = null){
 		$ret = $this->getLevel()->setBlock($this, $this, true, false);
 		$this->getLevel()->scheduleUpdate($this, $this->tickRate());
 

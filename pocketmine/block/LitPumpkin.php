@@ -52,10 +52,10 @@ class LitPumpkin extends Solid implements SolidLight{
 	}
 
 	public function __construct($meta = 0){
-		$this->meta = $meta;
+		$this->meta = (int) $meta;
 	}
 
-	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, Player $player = null){
+	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, ?Player $player = null){
 		if($player instanceof Player){
 			$this->meta = ((int) $player->getDirection() + 5) % 4;
 		}
@@ -69,7 +69,7 @@ class LitPumpkin extends Solid implements SolidLight{
 					$level->setBlock($block, new Air());
 					$level->setBlock($block0, new Air());
 					$level->setBlock($block1, new Air());
-					$golem = new SnowGolem($player->getLevel()->getChunk($this->getX() >> 4, $this->getZ() >> 4), new CompoundTag("", [
+					$golem = new SnowGolem($player->getLevel()->getChunk((int) $this->getX() >> 4, (int) $this->getZ() >> 4), new CompoundTag("", [
 						"Pos" => new ListTag("Pos", [
 							new DoubleTag("", $this->x),
 							new DoubleTag("", $this->y),
@@ -106,7 +106,7 @@ class LitPumpkin extends Solid implements SolidLight{
 					$level->setBlock($block, new Air());
 					$level->setBlock($block0, new Air());
 					$level->setBlock($block1, new Air());
-					$golem = new IronGolem($player->getLevel()->getChunk($this->getX() >> 4, $this->getZ() >> 4), new CompoundTag("", [
+					$golem = new IronGolem($player->getLevel()->getChunk((int) $this->getX() >> 4, (int) $this->getZ() >> 4), new CompoundTag("", [
 						"Pos" => new ListTag("Pos", [
 							new DoubleTag("", $this->x),
 							new DoubleTag("", $this->y),

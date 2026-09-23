@@ -40,7 +40,7 @@ class Slab extends Transparent{
 	protected $id = self::SLAB;
 
 	public function __construct($meta = 0){
-		$this->meta = $meta;
+		$this->meta = (int) $meta;
 	}
 
 	public function getHardness() {
@@ -100,7 +100,7 @@ class Slab extends Transparent{
 		}
 	}
 
-	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, Player $player = null){
+	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, ?Player $player = null){
 		$this->meta &= 0x07;
 		if($face === 0){
 			if($target->getId() === self::SLAB and ($target->getDamage() & 0x08) === 0x08 and ($target->getDamage() & 0x07) === ($this->meta & 0x07)){

@@ -68,6 +68,7 @@ class Random{
 	 * @param int $seed Integer to be used as seed.
 	 */
 	public function setSeed($seed){
+		$seed = (int) $seed;
 		$this->seed = $seed;
 		$this->x = self::X ^ $seed;
 		$this->y = self::Y ^ ($seed << 17) | (($seed >> 15) & 0x7fffffff) & 0xffffffff;
@@ -140,11 +141,13 @@ class Random{
 	 * @return int
 	 */
 	public function nextRange($start = 0, $end = 0x7fffffff){
+		$start = (int) $start;
+		$end = (int) $end;
 		return $start + ($this->nextInt() % ($end + 1 - $start));
 	}
 
 	public function nextBoundedInt($bound){
-		return $this->nextInt() % $bound;
+		return $this->nextInt() % (int) $bound;
 	}
 
 }

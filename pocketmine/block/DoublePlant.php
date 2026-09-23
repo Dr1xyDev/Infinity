@@ -37,7 +37,7 @@ class DoublePlant extends Flowable{
 	const PEONY = 5;
 
 	public function __construct($meta = 0){
-		$this->meta = $meta;
+		$this->meta = (int) $meta;
 	}
 
 	public function canBeReplaced(){
@@ -68,7 +68,7 @@ class DoublePlant extends Flowable{
 		return false;
 	}
 
-	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, Player $player = null){
+	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, ?Player $player = null){
 		$down = $this->getSide(0);
 		$up = $this->getSide(1);
 		if($down->getId() === self::GRASS or $down->getId() === self::DIRT){

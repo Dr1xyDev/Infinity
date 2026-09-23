@@ -37,7 +37,7 @@ class Dispenser extends Solid{
 	protected $id = self::DISPENSER;
 
 	public function __construct($meta = 0){
-		$this->meta = $meta;
+		$this->meta = (int) $meta;
 	}
 
 	public function canBeActivated() : bool {
@@ -56,7 +56,7 @@ class Dispenser extends Solid{
 		return Tool::TYPE_PICKAXE;
 	}
 
-	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, Player $player = null){
+	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, ?Player $player = null){
 		$dispenser = null;
 		if($player instanceof Player){
 			$pitch = $player->getPitch();
@@ -95,7 +95,7 @@ class Dispenser extends Solid{
 			}
 		}
 
-		Tile::createTile(Tile::DISPENSER, $this->getLevel()->getChunk($this->x >> 4, $this->z >> 4), $nbt);
+		Tile::createTile(Tile::DISPENSER, $this->getLevel()->getChunk((int) $this->x >> 4, (int) $this->z >> 4), $nbt);
 
 		return true;
 	}
@@ -107,7 +107,7 @@ class Dispenser extends Solid{
 		}
 	}
 
-	public function onActivate(Item $item, Player $player = null){
+	public function onActivate(Item $item, ?Player $player = null){
 		if($player instanceof Player){
 			$t = $this->getLevel()->getTile($this);
 			$dispenser = null;
@@ -122,7 +122,7 @@ class Dispenser extends Solid{
 					new IntTag("z", $this->z)
 				]);
 				$nbt->Items->setTagType(NBT::TAG_Compound);
-				$dispenser = Tile::createTile(Tile::DISPENSER, $this->getLevel()->getChunk($this->x >> 4, $this->z >> 4), $nbt);
+				$dispenser = Tile::createTile(Tile::DISPENSER, $this->getLevel()->getChunk((int) $this->x >> 4, (int) $this->z >> 4), $nbt);
 			}
 
 			if($player->isCreative() and $player->getServer()->limitedCreative){

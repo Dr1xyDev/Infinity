@@ -92,14 +92,14 @@ namespace pocketmine {
 		@define('pocketmine\PATH', \getcwd() . DIRECTORY_SEPARATOR);
 	}
 
-	if(version_compare("7.0", PHP_VERSION) > 0){
-		echo "[CRITICAL] You must use PHP >= 7.0" . PHP_EOL;
+	if(version_compare("8.4", PHP_VERSION) > 0){
+		echo "[CRITICAL] You must use PHP >= 8.4" . PHP_EOL;
 		echo "[CRITICAL] Please use the installer provided on the homepage." . PHP_EOL;
 		exit(1);
 	}
 
-	if(!extension_loaded("pthreads")){
-		echo "[CRITICAL] Unable to find the pthreads extension." . PHP_EOL;
+	if(!extension_loaded("pmmpthread")){
+		echo "[CRITICAL] Unable to find the pmmpthread extension." . PHP_EOL;
 		echo "[CRITICAL] Please use the installer provided on the homepage." . PHP_EOL;
 		exit(1);
 	}
@@ -393,12 +393,12 @@ namespace pocketmine {
 		++$errors;
 	}
 
-	$pthreads_version = phpversion("pthreads");
-	if(substr_count($pthreads_version, ".") < 2){
-		$pthreads_version = "0.$pthreads_version";
+	$pmmpthread_version = phpversion("pmmpthread");
+	if(substr_count($pmmpthread_version, ".") < 2){
+		$pmmpthread_version = "0.$pmmpthread_version";
 	}
-	if(version_compare($pthreads_version, "3.1.5") < 0){
-		$logger->critical("pthreads >= 3.1.5 is required, while you have $pthreads_version.");
+	if(version_compare($pmmpthread_version, "6.3.0") < 0){
+		$logger->critical("pmmpthread >= 6.3.0 is required, while you have $pmmpthread_version.");
 		++$errors;
 	}
 

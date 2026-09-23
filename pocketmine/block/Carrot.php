@@ -29,7 +29,7 @@ class Carrot extends Crops{
 	protected $id = self::CARROT_BLOCK;
 
 	public function __construct($meta = 0){
-		$this->meta = $meta;
+		$this->meta = (int) $meta;
 	}
 
 	public function getName() : string{

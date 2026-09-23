@@ -567,7 +567,7 @@ class Human extends Creature implements ProjectileSource, InventoryHolder{
 		return $hasUpdate;
 	}
 
-	public function getName(){
+	public function getName() : string{
 		return $this->getNameTag();
 	}
 

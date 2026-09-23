@@ -29,7 +29,7 @@ class SlimeBlock extends Solid{
 	protected $id = self::SLIME_BLOCK;
 
 	public function __construct($meta = 15){
-		$this->meta = $meta;
+		$this->meta = (int) $meta;
 	}
 
 	public function hasEntityCollision(){

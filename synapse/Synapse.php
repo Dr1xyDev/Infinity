@@ -184,10 +184,10 @@ class Synapse{
 	}
 
 	public function getPacket($buffer){
-		$pid = ord($buffer{0});
+		$pid = ord($buffer[0]);
 		$start = 1;
 		if($pid == 0xfe){
-			$pid = ord($buffer{1});
+			$pid = ord($buffer[1]);
 			$start++;
 		}
 		if(($data = $this->getGenisysServer()->getNetwork()->getPacket($pid)) === null){

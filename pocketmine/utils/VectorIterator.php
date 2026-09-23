@@ -223,7 +223,7 @@ class VectorIterator implements \Iterator{
 		return $this->getPosition($direction->z, $position->z, $block->z);
 	}
 
-	public function next(){
+	public function next() : void{
 		$this->scan();
 
 		if($this->currentBlock <= -1){
@@ -238,22 +238,22 @@ class VectorIterator implements \Iterator{
 	 *
 	 * @throws \OutOfBoundsException
 	 */
-	public function current(){
+	public function current() : mixed{
 		if($this->currentBlockObject === null){
 			throw new \OutOfBoundsException;
 		}
 		return $this->currentBlockObject;
 	}
 
-	public function rewind(){
+	public function rewind() : void{
 		throw new \InvalidStateException("BlockIterator doesn't support rewind()");
 	}
 
-	public function key(){
+	public function key() : mixed{
 		return $this->currentBlock - 1;
 	}
 
-	public function valid(){
+	public function valid() : bool{
 		$this->scan();
 		return $this->currentBlock !== -1;
 	}

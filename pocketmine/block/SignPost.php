@@ -32,7 +32,7 @@ class SignPost extends Transparent{
 	protected $id = self::SIGN_POST;
 
 	public function __construct($meta = 0){
-		$this->meta = $meta;
+		$this->meta = (int) $meta;
 	}
 
 	public function getHardness(){
@@ -52,7 +52,7 @@ class SignPost extends Transparent{
 	}
 
 
-	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, Player $player = null){
+	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, ?Player $player = null){
 		if($face !== 0){
 			$faces = [
 				2 => 2,

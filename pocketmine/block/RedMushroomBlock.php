@@ -32,7 +32,7 @@ class RedMushroomBlock extends Solid{
 	protected $id = self::RED_MUSHROOM_BLOCK;
 
 	public function __construct($meta = 14){
-		$this->meta = $meta;
+		$this->meta = (int) $meta;
 	}
 
 	public function canBeActivated() : bool {

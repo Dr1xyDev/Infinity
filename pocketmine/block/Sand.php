@@ -32,7 +32,7 @@ class Sand extends Fallable{
 	protected $id = self::SAND;
 
 	public function __construct($meta = 0){
-		$this->meta = $meta;
+		$this->meta = (int) $meta;
 	}
 
 	public function getHardness() {

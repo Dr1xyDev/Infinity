@@ -56,7 +56,7 @@ class EnchantingTable extends Transparent{
 		);
 	}
 
-	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, Player $player = null){
+	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, ?Player $player = null){
 		$this->getLevel()->setBlock($block, $this, true, true);
 		$nbt = new CompoundTag("", [
 			new StringTag("id", Tile::ENCHANT_TABLE),
@@ -75,7 +75,7 @@ class EnchantingTable extends Transparent{
 			}
 		}
 
-		Tile::createTile(Tile::ENCHANT_TABLE, $this->getLevel()->getChunk($this->x >> 4, $this->z >> 4), $nbt);
+		Tile::createTile(Tile::ENCHANT_TABLE, $this->getLevel()->getChunk((int) $this->x >> 4, (int) $this->z >> 4), $nbt);
 
 		return true;
 	}
@@ -100,7 +100,7 @@ class EnchantingTable extends Transparent{
 		return Tool::TYPE_PICKAXE;
 	}
 
-	public function onActivate(Item $item, Player $player = null){
+	public function onActivate(Item $item, ?Player $player = null){
 		if(!$this->getLevel()->getServer()->enchantingTableEnabled){
 			return true;
 		}
@@ -132,7 +132,7 @@ class EnchantingTable extends Transparent{
 				}
 
 				/** @var EnchantTable $enchantTable */
-				$enchantTable = Tile::createTile(Tile::ENCHANT_TABLE, $this->getLevel()->getChunk($this->x >> 4, $this->z >> 4), $nbt);
+				$enchantTable = Tile::createTile(Tile::ENCHANT_TABLE, $this->getLevel()->getChunk((int) $this->x >> 4, (int) $this->z >> 4), $nbt);
 			}
 			$player->addWindow(new EnchantInventory($this));
 			$player->craftingType = Player::CRAFTING_ENCHANT;

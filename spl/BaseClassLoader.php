@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
 */
 
-class BaseClassLoader extends \Threaded implements ClassLoader{
+class BaseClassLoader extends \pmmp\thread\ThreadSafe implements ClassLoader{
 
     /** @var \ClassLoader */
     private $parent;
@@ -28,10 +28,10 @@ class BaseClassLoader extends \Threaded implements ClassLoader{
     /**
      * @param ClassLoader $parent
      */
-    public function __construct(ClassLoader $parent = null){
+    public function __construct(?ClassLoader $parent = null){
         $this->parent = $parent;
-        $this->lookup = new \Threaded;
-        $this->classes = new \Threaded;
+        $this->lookup = new \pmmp\thread\ThreadSafeArray;
+        $this->classes = new \pmmp\thread\ThreadSafeArray;
     }
 
     /**

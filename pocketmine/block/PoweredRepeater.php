@@ -33,7 +33,7 @@ class PoweredRepeater extends RedstoneSource{
 	const ACTION_DEACTIVATE = "Repeater Deactivate";
 
 	public function __construct($meta = 0){
-		$this->meta = $meta;
+		$this->meta = (int) $meta;
 	}
 
 	public function getName() : string{
@@ -75,7 +75,7 @@ class PoweredRepeater extends RedstoneSource{
 		return round(($this->meta - ($this->meta % 4)) / 4) + 1;
 	}
 
-	public function isActivated(Block $from = null){
+	public function isActivated(?Block $from = null){
 		if(!$from instanceof Block){
 			return false;
 		}else{
@@ -129,15 +129,15 @@ class PoweredRepeater extends RedstoneSource{
 		return $type;
 	}
 
-	public function onActivate(Item $item, Player $player = null){
+	public function onActivate(Item $item, ?Player $player = null){
 		$meta = $this->meta + 4;
 		if($meta > 15) $this->meta = $this->meta % 4;
-		else $this->meta = $meta;
+		else $this->meta = (int) $meta;
 		$this->getLevel()->setBlock($this, $this, true, false);
 		return true;
 	}
 
-	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, Player $player = null){
+	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, ?Player $player = null){
 		if($player instanceof Player){
 			$this->meta = ((int) $player->getDirection() + 5) % 4;
 		}

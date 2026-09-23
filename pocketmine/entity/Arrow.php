@@ -45,7 +45,7 @@ class Arrow extends Projectile{
 	protected $isCritical;
 	protected $potionId;
 
-	public function __construct(FullChunk $chunk, CompoundTag $nbt, Entity $shootingEntity = null, $critical = false){
+	public function __construct(FullChunk $chunk, CompoundTag $nbt, ?Entity $shootingEntity = null, $critical = false){
 		$this->isCritical = (bool) $critical;
 		if(!isset($nbt->Potion)){
 			$nbt->Potion = new ShortTag("Potion", 0);

@@ -47,7 +47,7 @@ class TimingsHandler{
 	 * @param string         $name
 	 * @param TimingsHandler $parent
 	 */
-	public function __construct($name, TimingsHandler $parent = null){
+	public function __construct($name, ?TimingsHandler $parent = null){
 		$this->name = $name;
 		if($parent !== null){
 			$this->parent = $parent;

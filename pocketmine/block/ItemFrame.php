@@ -35,7 +35,7 @@ class ItemFrame extends Transparent{
 	protected $id = self::ITEM_FRAME_BLOCK;
 
 	public function __construct($meta = 0){
-		$this->meta = $meta;
+		$this->meta = (int) $meta;
 	}
 
 	public function getName() : string{
@@ -46,7 +46,7 @@ class ItemFrame extends Transparent{
 		return true;
 	}
 
-	public function onActivate(Item $item, Player $player = null){
+	public function onActivate(Item $item, ?Player $player = null){
 		$tile = $this->getLevel()->getTile($this);
 		if(!$tile instanceof ItemFrameTile){
 			$nbt = new CompoundTag("", [
@@ -57,7 +57,7 @@ class ItemFrame extends Transparent{
 				new ByteTag("ItemRotation", 0),
 				new FloatTag("ItemDropChance", 1.0)
 			]);
-			Tile::createTile(Tile::ITEM_FRAME, $this->getLevel()->getChunk($this->x >> 4, $this->z >> 4), $nbt);
+			Tile::createTile(Tile::ITEM_FRAME, $this->getLevel()->getChunk((int) $this->x >> 4, (int) $this->z >> 4), $nbt);
 		}
 
 		if($tile->getItem()->getId() === 0){
@@ -112,7 +112,7 @@ class ItemFrame extends Transparent{
 		];
 	}
 
-	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, Player $player = null){
+	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, ?Player $player = null){
 		if($target->isTransparent() === false and $face > 1 and $block->isSolid() === false){
 			$faces = [
 				2 => 3,
@@ -137,7 +137,7 @@ class ItemFrame extends Transparent{
 			    }
 		    }
 		    
-			Tile::createTile(Tile::ITEM_FRAME, $this->getLevel()->getChunk($this->x >> 4, $this->z >> 4), $nbt);
+			Tile::createTile(Tile::ITEM_FRAME, $this->getLevel()->getChunk((int) $this->x >> 4, (int) $this->z >> 4), $nbt);
 			return true;
 		}
 		return false;

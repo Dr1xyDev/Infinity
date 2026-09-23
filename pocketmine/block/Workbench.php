@@ -31,7 +31,7 @@ class Workbench extends Solid{
 	protected $id = self::WORKBENCH;
 
 	public function __construct($meta = 0){
-		$this->meta = $meta;
+		$this->meta = (int) $meta;
 	}
 
 	public function canBeActivated() : bool {
@@ -50,7 +50,7 @@ class Workbench extends Solid{
 		return Tool::TYPE_AXE;
 	}
 
-	public function onActivate(Item $item, Player $player = null){
+	public function onActivate(Item $item, ?Player $player = null){
 		if($player instanceof Player){
 			if($player->getServer()->limitedCreative and $player->isCreative()) return true;
 			$player->craftingType = Player::CRAFTING_BIG;

@@ -31,7 +31,7 @@ class SnowLayer extends Flowable{
 	protected $id = self::SNOW_LAYER;
 
 	public function __construct($meta = 0){
-		$this->meta = $meta;
+		$this->meta = (int) $meta;
 	}
 
 	public function getName() : string{
@@ -51,7 +51,7 @@ class SnowLayer extends Flowable{
 	}
 
 
-	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, Player $player = null){
+	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, ?Player $player = null){
 		$down = $this->getSide(0);
 		if($down->isSolid()){
 			$this->getLevel()->setBlock($block, $this, true);

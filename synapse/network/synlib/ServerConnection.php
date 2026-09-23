@@ -48,7 +48,7 @@ class ServerConnection{
 		$this->run();
 	}
 
-	public function run(){
+	public function run() : void{
 		$this->tickProcessor();
 	}
 

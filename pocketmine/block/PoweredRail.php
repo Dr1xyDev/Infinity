@@ -32,7 +32,7 @@ class PoweredRail extends Rail{
 	protected $connected = [];
 
 	public function __construct($meta = 0){
-		$this->meta = $meta;//0,1,2,3,4,5
+		$this->meta = (int) $meta;//0,1,2,3,4,5
 	}
 
 	public function getName() : string{
@@ -110,7 +110,7 @@ class PoweredRail extends Rail{
 		return true;
 	}
 
-	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, Player $player = null){
+	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, ?Player $player = null){
 		$downBlock = $this->getSide(Vector3::SIDE_DOWN);
 
 		if($downBlock instanceof Rail or !$this->isBlock($downBlock)){//判断是否可以放置

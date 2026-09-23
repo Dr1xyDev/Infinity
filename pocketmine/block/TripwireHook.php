@@ -26,7 +26,7 @@ class TripwireHook extends Solid {
     protected $id = self::TRIPWIRE_HOOK;
 
     public function __construct($meta = 0){
-        $this->meta = $meta;
+        $this->meta = (int) $meta;
     }
 
     public function getName() :string {

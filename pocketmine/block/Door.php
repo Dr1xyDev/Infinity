@@ -225,7 +225,7 @@ abstract class Door extends Transparent implements ElectricalAppliance{
 		return false;
 	}
 
-	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, Player $player = null){
+	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, ?Player $player = null){
 		if($face === 1){
 			$blockUp = $this->getSide(Vector3::SIDE_UP);
 			$blockDown = $this->getSide(Vector3::SIDE_DOWN);
@@ -276,13 +276,13 @@ abstract class Door extends Transparent implements ElectricalAppliance{
 		return (($this->getFullDamage() & 0x04) > 0);
 	}
 
-	public function onActivate(Item $item, Player $player = null){
+	public function onActivate(Item $item, ?Player $player = null){
 		if(($this->getDamage() & 0x08) === 0x08){ //Top
 			$down = $this->getSide(Vector3::SIDE_DOWN);
 			if($down->getId() === $this->getId()){
 				$meta = $down->getDamage() ^ 0x04;
 				$this->getLevel()->setBlock($down, Block::get($this->getId(), $meta), true);
-				$players = $this->getLevel()->getChunkPlayers($this->x >> 4, $this->z >> 4);
+				$players = $this->getLevel()->getChunkPlayers((int) $this->x >> 4, (int) $this->z >> 4);
 				if($player instanceof Player){
 					unset($players[$player->getLoaderId()]);
 				}
@@ -295,7 +295,7 @@ abstract class Door extends Transparent implements ElectricalAppliance{
 		}else{
 			$this->meta ^= 0x04;
 			$this->getLevel()->setBlock($this, $this, true);
-			$players = $this->getLevel()->getChunkPlayers($this->x >> 4, $this->z >> 4);
+			$players = $this->getLevel()->getChunkPlayers((int) $this->x >> 4, (int) $this->z >> 4);
 			if($player instanceof Player){
 				unset($players[$player->getLoaderId()]);
 			}

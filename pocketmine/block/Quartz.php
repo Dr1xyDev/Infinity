@@ -36,7 +36,7 @@ class Quartz extends Solid{
 	protected $id = self::QUARTZ_BLOCK;
 
 	public function __construct($meta = 0){
-		$this->meta = $meta;
+		$this->meta = (int) $meta;
 	}
 
 	public function getHardness() {
@@ -53,7 +53,7 @@ class Quartz extends Solid{
 		return $names[$this->meta & 0x03];
 	}
 	
-	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, Player $player = null){
+	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, ?Player $player = null){
 		if($this->meta === 1 or $this->meta === 2){
 			//Quartz pillar block and chiselled quartz have different orientations
 			$faces = [

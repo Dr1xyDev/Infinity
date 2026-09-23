@@ -34,7 +34,7 @@ class UnpoweredRepeater extends PoweredRepeater{
 		return 0;
 	}
 
-	public function isActivated(Block $from = null){
+	public function isActivated(?Block $from = null){
 		return false;
 	}
 

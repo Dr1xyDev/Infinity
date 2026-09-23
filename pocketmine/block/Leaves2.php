@@ -35,7 +35,7 @@ class Leaves2 extends Leaves{
 	protected $id = self::LEAVES2;
 
 	public function __construct($meta = 0){
-		$this->meta = $meta;
+		$this->meta = (int) $meta;
 	}
 
 	public function getName() : string{

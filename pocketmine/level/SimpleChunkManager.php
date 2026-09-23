@@ -243,7 +243,7 @@ class SimpleChunkManager implements ChunkManager{
 	 * @param int $chunkZ
 	 * @param FullChunk $chunk
 	 */
-	public function setChunk(int $chunkX, int $chunkZ, FullChunk $chunk = null){
+	public function setChunk(int $chunkX, int $chunkZ, ?FullChunk $chunk = null){
 		if($chunk === null){
 			unset($this->chunks[Level::chunkHash($chunkX, $chunkZ)]);
 			return;

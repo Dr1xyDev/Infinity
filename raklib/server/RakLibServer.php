@@ -15,21 +15,26 @@
 
 namespace raklib\server;
 
+use pmmp\thread\Thread as PmmpThread;
 
-class RakLibServer extends \Thread{
+
+use pmmp\thread\ThreadSafeArray;
+
+class RakLibServer extends \pmmp\thread\Thread{
 	protected $port;
 	protected $interface;
 	/** @var \ThreadedLogger */
 	protected $logger;
 	protected $loader;
 
+	/** @var string JSON-encoded load paths (plain arrays are not thread-safe) */
 	public $loadPaths;
 
 	protected $shutdown;
 
-	/** @var \Threaded */
+	/** @var ThreadSafeArray */
 	protected $externalQueue;
-	/** @var \Threaded */
+	/** @var ThreadSafeArray */
 	protected $internalQueue;
 
 	protected $mainPath;
@@ -54,18 +59,18 @@ class RakLibServer extends \Thread{
 		$loadPaths = [];
 		$this->addDependency($loadPaths, new \ReflectionClass($logger));
 		$this->addDependency($loadPaths, new \ReflectionClass($loader));
-		$this->loadPaths = array_reverse($loadPaths);
+		$this->loadPaths = json_encode(array_reverse($loadPaths));
 		$this->shutdown = false;
 
-		$this->externalQueue = new \Threaded;
-		$this->internalQueue = new \Threaded;
+		$this->externalQueue = new ThreadSafeArray();
+		$this->internalQueue = new ThreadSafeArray();
 
 		if(\Phar::running(true) !== ""){
 			$this->mainPath = \Phar::running(true);
 		}else{
 			$this->mainPath = \getcwd() . DIRECTORY_SEPARATOR;
 		}
-		$this->start();
+		$this->start(PmmpThread::INHERIT_ALL);
 	}
 
 	protected function addDependency(array &$loadPaths, \ReflectionClass $dep){
@@ -141,7 +146,7 @@ class RakLibServer extends \Thread{
 		}
 	}
 
-	public function errorHandler($errno, $errstr, $errfile, $errline, $context, $trace = null){
+	public function errorHandler($errno, $errstr, $errfile, $errline, $context = null, $trace = null){
 		if(error_reporting() === 0){
 			return false;
 		}
@@ -157,7 +162,6 @@ class RakLibServer extends \Thread{
 			E_USER_ERROR => "E_USER_ERROR",
 			E_USER_WARNING => "E_USER_WARNING",
 			E_USER_NOTICE => "E_USER_NOTICE",
-			E_STRICT => "E_STRICT",
 			E_RECOVERABLE_ERROR => "E_RECOVERABLE_ERROR",
 			E_DEPRECATED => "E_DEPRECATED",
 			E_USER_DEPRECATED => "E_USER_DEPRECATED",
@@ -212,9 +216,9 @@ class RakLibServer extends \Thread{
 		return rtrim(str_replace(["\\", ".php", "phar://", rtrim(str_replace(["\\", "phar://"], ["/", ""], $this->mainPath), "/")], ["/", "", "", ""], $path), "/");
 	}
 
-	public function run(){
+	public function run() : void{
 		//Load removed dependencies, can't use require_once()
-		foreach($this->loadPaths as $name => $path){
+		foreach(json_decode($this->loadPaths, true) as $name => $path){
 			if(!class_exists($name, false) and !interface_exists($name, false)){
 				require($path);
 			}

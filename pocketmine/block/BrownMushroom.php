@@ -30,7 +30,7 @@ class BrownMushroom extends Flowable{
 	protected $id = self::BROWN_MUSHROOM;
 
 	public function __construct($meta = 0){
-		$this->meta = $meta;
+		$this->meta = (int) $meta;
 	}
 
 	public function getName() : string{
@@ -53,7 +53,7 @@ class BrownMushroom extends Flowable{
 		return false;
 	}
 
-	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, Player $player = null){
+	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, ?Player $player = null){
 		$down = $this->getSide(0);
 		if($down->isTransparent() === false){
 			$this->getLevel()->setBlock($block, $this, true, true);

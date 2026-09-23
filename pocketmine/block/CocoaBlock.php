@@ -32,7 +32,7 @@ class CocoaBlock extends Solid {
     protected $id = self::COCOA_BLOCK;
 
     public function __construct($meta = 0) {
-        $this->meta = $meta;
+        $this->meta = (int) $meta;
     }
 
     public function getName() : string {
@@ -51,7 +51,7 @@ class CocoaBlock extends Solid {
         return true;
     }
 
-    public function onActivate(Item $item, Player $player = null) {
+    public function onActivate(Item $item, ?Player $player = null) {
         if ($item->getId() === Item::DYE and $item->getDamage() === 0x0F) {
             $block = clone $this;
             if ($block->meta > 7) {
@@ -94,7 +94,7 @@ class CocoaBlock extends Solid {
         return false;
     }
 
-    public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, Player $player = null) {
+    public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, ?Player $player = null) {
         if ($target->getId() === Block::WOOD and $target->getDamage() === 3) {
             if ($face !== 0 and $face !== 1) {
                 $faces = [

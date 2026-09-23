@@ -36,7 +36,7 @@ class Hopper extends Transparent{
 	protected $id = self::HOPPER_BLOCK;
 
 	public function __construct($meta = 0){
-		$this->meta = $meta;
+		$this->meta = (int) $meta;
 	}
 
 	public function canBeActivated(): bool{
@@ -55,7 +55,7 @@ class Hopper extends Transparent{
 		return 3;
 	}
 
-	public function onActivate(Item $item, Player $player = null){
+	public function onActivate(Item $item, ?Player $player = null){
 		if($player instanceof Player){
 			$t = $this->getLevel()->getTile($this);
 			if($t instanceof TileHopper){
@@ -77,7 +77,7 @@ class Hopper extends Transparent{
 		return $this->target;
 	}
 
-	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, Player $player = null){
+	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, ?Player $player = null){
 		$faces = [
 			0 => 0,
 			1 => 0,
@@ -108,7 +108,7 @@ class Hopper extends Transparent{
 			}
 		}
 
-		$t = Tile::createTile(Tile::HOPPER, $this->getLevel()->getChunk($this->x >> 4, $this->z >> 4), $nbt);
+		$t = Tile::createTile(Tile::HOPPER, $this->getLevel()->getChunk((int) $this->x >> 4, (int) $this->z >> 4), $nbt);
 
 		return true;
 	}

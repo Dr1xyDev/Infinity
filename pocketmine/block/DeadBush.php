@@ -30,14 +30,14 @@ class DeadBush extends Flowable{
 	protected $id = self::DEAD_BUSH;
 
 	public function __construct($meta = 0){
-		$this->meta = $meta;
+		$this->meta = (int) $meta;
 	}
 
 	public function getName() : string{
 		return "Dead Bush";
 	}
 
-	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, Player $player = null){
+	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, ?Player $player = null){
 		$down = $this->getSide(0);
 		if($down->getId() === Block::SAND or $down->getId() === Block::PODZOL or
 			$down->getId() === Block::HARDENED_CLAY or $down->getId() === Block::STAINED_CLAY){

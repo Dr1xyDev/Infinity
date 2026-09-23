@@ -29,6 +29,7 @@ class VersionString{
 	private $major;
 	private $build;
 	private $minor;
+	private $generation = 0;
 	private $development = false;
 
 	public function __construct($version = \pocketmine\VERSION){

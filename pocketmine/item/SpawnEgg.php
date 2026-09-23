@@ -47,7 +47,7 @@ class SpawnEgg extends Item{
 			return true;
 		}else{
 			$entity = null;
-			$chunk = $level->getChunk($block->getX() >> 4, $block->getZ() >> 4);
+			$chunk = $level->getChunk((int) $block->getX() >> 4, (int) $block->getZ() >> 4);
 
 			if(!($chunk instanceof FullChunk)){
 				return false;

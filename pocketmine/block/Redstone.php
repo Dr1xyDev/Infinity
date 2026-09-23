@@ -44,7 +44,7 @@ class Redstone extends RedstoneSource{
 		return true;
 	}
 
-	public function isActivated(Block $from = null){
+	public function isActivated(?Block $from = null){
 		return true;
 	}
 

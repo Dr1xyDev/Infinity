@@ -29,7 +29,7 @@ class WoodStairs extends Stair{
 	protected $id = self::WOOD_STAIRS;
 
 	public function __construct($meta = 0){
-		$this->meta = $meta;
+		$this->meta = (int) $meta;
 	}
 
 	public function getName() : string{

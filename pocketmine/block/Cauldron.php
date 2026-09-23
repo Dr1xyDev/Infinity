@@ -49,7 +49,7 @@ class Cauldron extends Solid{
 	protected $id = self::CAULDRON_BLOCK;
 
 	public function __construct($meta = 0){
-		$this->meta = $meta;
+		$this->meta = (int) $meta;
 	}
 
 	public function getHardness(){
@@ -68,7 +68,7 @@ class Cauldron extends Solid{
 		return Tool::TYPE_PICKAXE;
 	}
 
-	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, Player $player = null){
+	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, ?Player $player = null){
 		$nbt = new CompoundTag("", [
 			new StringTag("id", Tile::CAULDRON),
 			new IntTag("x", $block->x),
@@ -85,7 +85,7 @@ class Cauldron extends Solid{
 			}
 		}
 		
-		$chunk = $this->getLevel()->getChunk($this->x >> 4, $this->z >> 4);
+		$chunk = $this->getLevel()->getChunk((int) $this->x >> 4, (int) $this->z >> 4);
 		$tile = Tile::createTile("Cauldron", $chunk, $nbt);//
 		$this->getLevel()->setBlock($block, $this, true, true);
 		return true;
@@ -118,7 +118,7 @@ class Cauldron extends Solid{
 		return $this->meta === 0x06;
 	}
 
-	public function onActivate(Item $item, Player $player = null){//@author iTX. rewrite @Dog194
+	public function onActivate(Item $item, ?Player $player = null){//@author iTX. rewrite @Dog194
 		$tile = $this->getLevel()->getTile($this);
 		if(!($tile instanceof TileCauldron)){
 			return false;

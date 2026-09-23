@@ -31,7 +31,7 @@ class Noteblock extends Solid implements ElectricalAppliance{
 	protected $id = self::NOTEBLOCK;
 
 	public function __construct($meta = 0){
-		$this->meta = $meta;
+		$this->meta = (int) $meta;
 	}
 
 	public function getHardness(){
@@ -133,7 +133,7 @@ class Noteblock extends Solid implements ElectricalAppliance{
 		return NoteblockSound::INSTRUMENT_PIANO;
 	}
 
-	public function onActivate(Item $item, Player $player = null){
+	public function onActivate(Item $item, ?Player $player = null){
 		$up = $this->getSide(Vector3::SIDE_UP);
 		if($up->getId() == 0){
 			$this->getLevel()->addSound(new NoteblockSound($this, $this->getInstrument(), $this->getStrength()));

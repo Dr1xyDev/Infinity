@@ -41,7 +41,7 @@ class Fire extends Flowable{
 	private $temporalVector = null;
 
 	public function __construct($meta = 0){
-		$this->meta = $meta;
+		$this->meta = (int) $meta;
 		if($this->temporalVector === null){
 			$this->temporalVector = new Vector3(0, 0, 0);
 		}

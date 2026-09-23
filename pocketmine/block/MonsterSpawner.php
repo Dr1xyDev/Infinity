@@ -35,7 +35,7 @@ class MonsterSpawner extends Solid{
 	protected $id = self::MONSTER_SPAWNER;
 
 	public function __construct($meta = 0){
-		$this->meta = $meta;
+		$this->meta = (int) $meta;
 	}
 
 	public function getHardness() {
@@ -54,7 +54,7 @@ class MonsterSpawner extends Solid{
 		return true;
 	}
 
-	public function onActivate(Item $item, Player $player = null){
+	public function onActivate(Item $item, ?Player $player = null){
 		if($this->getDamage() == 0){
 			if($item->getId() == Item::SPAWN_EGG){
 				$tile = $this->getLevel()->getTile($this);
@@ -69,7 +69,7 @@ class MonsterSpawner extends Solid{
 		return false;
 	}
 
-	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, Player $player = null){
+	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, ?Player $player = null){
 
 		$this->getLevel()->setBlock($block, $this, true, true);
 		$nbt = new CompoundTag("", [
@@ -86,7 +86,7 @@ class MonsterSpawner extends Solid{
 			}
 		}
 		
-		Tile::createTile(Tile::MOB_SPAWNER, $this->getLevel()->getChunk($this->x >> 4, $this->z >> 4), $nbt);
+		Tile::createTile(Tile::MOB_SPAWNER, $this->getLevel()->getChunk((int) $this->x >> 4, (int) $this->z >> 4), $nbt);
 		return true;
 	}
 

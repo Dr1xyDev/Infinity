@@ -30,7 +30,7 @@ class Farmland extends Solid{
 	protected $id = self::FARMLAND;
 
 	public function __construct($meta = 0){
-		$this->meta = $meta;
+		$this->meta = (int) $meta;
 	}
 
 	public function getName() : string{

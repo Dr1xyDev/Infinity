@@ -30,7 +30,7 @@ class IronDoor extends Door{
 	protected $id = self::IRON_DOOR_BLOCK;
 
 	public function __construct($meta = 0){
-		$this->meta = $meta;
+		$this->meta = (int) $meta;
 	}
 
 	public function getName() : string{
@@ -55,7 +55,7 @@ class IronDoor extends Door{
 		}
 	}
 
-	public function onActivate(Item $item, Player $player = null){
+	public function onActivate(Item $item, ?Player $player = null){
 		if($player instanceof Player) return true;
 		else return parent::onActivate($item, $player);
 	}

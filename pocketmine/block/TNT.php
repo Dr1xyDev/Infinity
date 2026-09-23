@@ -62,7 +62,7 @@ class TNT extends Solid implements ElectricalAppliance{
 		return 100;
 	}
 
-	public function prime(Player $player = null){
+	public function prime(?Player $player = null){
 		$this->meta = 1;
 		if($player != null and $player->isCreative()){
 			$dropItem = false;
@@ -70,7 +70,7 @@ class TNT extends Solid implements ElectricalAppliance{
 			$dropItem = true;
 		}
 		$mot = (new Random())->nextSignedFloat() * M_PI * 2;
-		$tnt = Entity::createEntity("PrimedTNT", $this->getLevel()->getChunk($this->x >> 4, $this->z >> 4), new CompoundTag("", [
+		$tnt = Entity::createEntity("PrimedTNT", $this->getLevel()->getChunk((int) $this->x >> 4, (int) $this->z >> 4), new CompoundTag("", [
 			"Pos" => new ListTag("Pos", [
 				new DoubleTag("", $this->x + 0.5),
 				new DoubleTag("", $this->y),
@@ -108,13 +108,13 @@ class TNT extends Solid implements ElectricalAppliance{
 		return false;
 	}
 
-	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, Player $player = null){
+	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, ?Player $player = null){
 		$this->getLevel()->setBlock($this, $this, true, false);
 
 		$this->getLevel()->scheduleUpdate($this, 40);
 	}
 
-	public function onActivate(Item $item, Player $player = null){
+	public function onActivate(Item $item, ?Player $player = null){
 		if($item->getId() === Item::FLINT_STEEL){
 			$this->prime($player);
 			$this->getLevel()->setBlock($this, new Air(), true);

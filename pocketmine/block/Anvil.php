@@ -40,7 +40,7 @@ class Anvil extends Fallable{
 	}
 
 	public function __construct($meta = 0){
-		$this->meta = $meta;
+		$this->meta = (int) $meta;
 	}
 
 	public function canBeActivated() : bool {
@@ -69,7 +69,7 @@ class Anvil extends Fallable{
 		return Tool::TYPE_PICKAXE;
 	}
 
-	public function onActivate(Item $item, Player $player = null){
+	public function onActivate(Item $item, ?Player $player = null){
 		if(!$this->getLevel()->getServer()->anvilEnabled){
 			return true;
 		}
@@ -85,7 +85,7 @@ class Anvil extends Fallable{
 		return true;
 	}
 	
-	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, Player $player = null){
+	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, ?Player $player = null){
 		$direction = ($player !== null? $player->getDirection(): 0) & 0x03;
 		$this->meta = ($this->meta & 0x0c) | $direction;
 		$this->getLevel()->setBlock($block, $this, true, true);

@@ -47,7 +47,7 @@ class SimpleTransactionQueue implements TransactionQueue{
 	/**
 	 * @param Player $player
 	 */
-	public function __construct(Player $player = null){
+	public function __construct(?Player $player = null){
 		$this->player = $player;
 		$this->transactionQueue = new \SplQueue();
 		$this->transactionsToRetry = new \SplQueue();

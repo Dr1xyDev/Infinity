@@ -120,7 +120,7 @@ abstract class BaseFullChunk implements FullChunk{
 
 		for($x = 0; $x < 16; ++$x){
 			for($z = 0; $z < 16; ++$z){
-				$biome = Biome::getBiome(ord($data{($z << 4) + $x}));
+				$biome = Biome::getBiome(ord($data[($z << 4) + $x]));
 				$this->setBiomeId($x, $z, $biome->getId());
 				$c = $biome->getColor();
 				$this->setBiomeColor($x, $z, $c >> 16, ($c >> 8) & 0xff, $c & 0xff);
@@ -140,7 +140,7 @@ abstract class BaseFullChunk implements FullChunk{
 							continue;
 						}
 
-						if(($nbt["Pos"][0] >> 4) !== $this->x or ($nbt["Pos"][2] >> 4) !== $this->z){
+						if(((int) $nbt["Pos"][0] >> 4) !== $this->x or ((int) $nbt["Pos"][2] >> 4) !== $this->z){
 							$changed = true;
 							continue; //Fixes entities allocated in wrong chunks.
 						}
@@ -231,6 +231,9 @@ abstract class BaseFullChunk implements FullChunk{
 
 	public function setBiomeColor($x, $z, $R, $G, $B){
 		$this->hasChanged = true;
+		$R = (int) $R;
+		$G = (int) $G;
+		$B = (int) $B;
 		$this->biomeColors[($z << 4) + $x] = ($this->biomeColors[($z << 4) + $x] & 0xFF000000) | (($R & 0xFF) << 16) | (($G & 0xFF) << 8) | ($B & 0xFF);
 	}
 
@@ -239,7 +242,7 @@ abstract class BaseFullChunk implements FullChunk{
 	}
 
 	public function setHeightMap($x, $z, $value){
-		$this->heightMap[($z << 4) + $x] = $value;
+		$this->heightMap[($z << 4) + $x] = (int) $value;
 	}
 
 	public function recalculateHeightMap(){
@@ -300,7 +303,7 @@ abstract class BaseFullChunk implements FullChunk{
 
 		$column = $this->getBlockIdColumn($x, $z);
 		for($y = 127; $y >= 0; --$y){
-			if($column{$y} !== "\x00"){
+			if($column[$y] !== "\x00"){
 				$this->setHeightMap($x, $z, $y);
 				return $y;
 			}
@@ -325,7 +328,7 @@ abstract class BaseFullChunk implements FullChunk{
 
 	public function addTile(Tile $tile){
 		$this->tiles[$tile->getId()] = $tile;
-		if(isset($this->tileList[$index = (($tile->z & 0x0f) << 12) | (($tile->x & 0x0f) << 8) | ($tile->y & 0xff)]) and $this->tileList[$index] !== $tile){
+		if(isset($this->tileList[$index = (((int) $tile->z & 0x0f) << 12) | (((int) $tile->x & 0x0f) << 8) | ((int) $tile->y & 0xff)]) and $this->tileList[$index] !== $tile){
 			$this->tileList[$index]->close();
 		}
 		$this->tileList[$index] = $tile;
@@ -336,7 +339,7 @@ abstract class BaseFullChunk implements FullChunk{
 
 	public function removeTile(Tile $tile){
 		unset($this->tiles[$tile->getId()]);
-		unset($this->tileList[(($tile->z & 0x0f) << 12) | (($tile->x & 0x0f) << 8) | ($tile->y & 0xff)]);
+		unset($this->tileList[(((int) $tile->z & 0x0f) << 12) | (((int) $tile->x & 0x0f) << 8) | ((int) $tile->y & 0xff)]);
 		if($this->isInit){
 			$this->hasChanged = true;
 		}
@@ -436,7 +439,7 @@ abstract class BaseFullChunk implements FullChunk{
 		$this->hasChanged = (bool) $changed;
 	}
 
-	public static function fromFastBinary($data, LevelProvider $provider = null){
+	public static function fromFastBinary($data, ?LevelProvider $provider = null){
 		return static::fromBinary($data, $provider);
 	}
 

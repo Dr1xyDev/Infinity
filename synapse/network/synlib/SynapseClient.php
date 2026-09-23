@@ -21,9 +21,11 @@
 
 namespace synapse\network\synlib;
 
-use pocketmine\Thread;
+use pmmp\thread\Thread as PmmpThread;
 
-class SynapseClient extends Thread{
+use pocketmine\thread\Thread;
+
+class SynapseClient extends \pmmp\thread\Thread{
 	const VERSION = "0.2.0";
 
 	/** @var \ThreadedLogger */
@@ -51,8 +53,8 @@ class SynapseClient extends Thread{
 		$this->setClassLoader($loader);
 
 		$this->shutdown = false;
-		$this->externalQueue = new \Threaded;
-		$this->internalQueue = new \Threaded;
+		$this->externalQueue = new \ThreadSafeArray;
+		$this->internalQueue = new \ThreadSafeArray;
 
 		if(\Phar::running(true) !== ""){
 			$this->mainPath = \Phar::running(true);
@@ -60,7 +62,7 @@ class SynapseClient extends Thread{
 			$this->mainPath = \getcwd() . DIRECTORY_SEPARATOR;
 		}
 
-		$this->start();
+		$this->start(PmmpThread::INHERIT_ALL);
 	}
 
 	public function reconnect(){
@@ -83,12 +85,12 @@ class SynapseClient extends Thread{
 		$this->connected = $con;
 	}
 
-	public function quit(){
+	public function quit() : void{
 		$this->shutdown();
 		parent::quit();
 	}
 
-	public function run(){
+	public function run() : void{
 		$this->registerClassLoader();
 		gc_enable();
 		error_reporting(-1);
@@ -231,10 +233,6 @@ class SynapseClient extends Thread{
 	 */
 	public function getLogger(){
 		return $this->logger;
-	}
-
-	public function isGarbage() : bool{
-		parent::isGarbage();
 	}
 
 	public function getThreadName(){

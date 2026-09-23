@@ -635,7 +635,7 @@ abstract class Entity extends Location implements Metadatable{
 	 * @param Player[]|Player $player
 	 * @param array           $data Properly formatted entity data, defaults to everything
 	 */
-	public function sendData($player, array $data = null){
+	public function sendData($player, ?array $data = null){
 		$pk = new SetEntityDataPacket();
 		$pk->eid = ($player === $this ? 0 : $this->getId());
 		$pk->metadata = $data === null ? $this->dataProperties : $data;
@@ -1483,14 +1483,14 @@ abstract class Entity extends Location implements Metadatable{
 	}
 
 	protected function checkChunks(){
-		if($this->chunk === null or ($this->chunk->getX() !== ($this->x >> 4) or $this->chunk->getZ() !== ($this->z >> 4))){
+		if($this->chunk === null or ($this->chunk->getX() !== ((int) $this->x >> 4) or $this->chunk->getZ() !== ((int) $this->z >> 4))){
 			if($this->chunk !== null){
 				$this->chunk->removeEntity($this);
 			}
-			$this->chunk = $this->level->getChunk($this->x >> 4, $this->z >> 4, true);
+			$this->chunk = $this->level->getChunk((int) $this->x >> 4, (int) $this->z >> 4, true);
 
 			if(!$this->justCreated){
-				$newChunk = $this->level->getChunkPlayers($this->x >> 4, $this->z >> 4);
+				$newChunk = $this->level->getChunkPlayers((int) $this->x >> 4, (int) $this->z >> 4);
 				foreach($this->hasSpawned as $player){
 					if(!isset($newChunk[$player->getLoaderId()])){
 						$this->despawnFrom($player);
@@ -1711,7 +1711,7 @@ abstract class Entity extends Location implements Metadatable{
 		}
 	}
 
-	public function setLinked($type = 0, Entity $entity){
+	public function setLinked($type, Entity $entity){
 		if($type != 0 and $entity === null){
 			return false;
 		}

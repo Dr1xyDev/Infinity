@@ -29,7 +29,7 @@ class EndPortalFrame extends Solid implements SolidLight{
 	protected $id = self::END_PORTAL_FRAME;
 
 	public function __construct($meta = 0){
-		$this->meta = $meta;
+		$this->meta = (int) $meta;
 	}
 
 	public function getLightLevel(){

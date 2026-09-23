@@ -21,9 +21,11 @@
 
 namespace pocketmine\utils;
 
+use pmmp\thread\Thread as PmmpThread;
+
 use LogLevel;
-use pocketmine\Thread;
-use pocketmine\Worker;
+use pocketmine\thread\Thread;
+use pocketmine\thread\Worker;
 
 class MainLogger extends \AttachableThreadedLogger{
 	protected $logFile;
@@ -69,8 +71,8 @@ class MainLogger extends \AttachableThreadedLogger{
 		touch($logFile);
 		$this->logFile = $logFile;
 		$this->logDebug = (bool) $logDebug;
-		$this->logStream = new \Threaded;
-		$this->start();
+		$this->logStream = new \pmmp\thread\ThreadSafeArray;
+		$this->start(PmmpThread::INHERIT_ALL);
 	}
 
 	/**
@@ -144,7 +146,6 @@ class MainLogger extends \AttachableThreadedLogger{
 			E_USER_ERROR => "E_USER_ERROR",
 			E_USER_WARNING => "E_USER_WARNING",
 			E_USER_NOTICE => "E_USER_NOTICE",
-			E_STRICT => "E_STRICT",
 			E_RECOVERABLE_ERROR => "E_RECOVERABLE_ERROR",
 			E_DEPRECATED => "E_DEPRECATED",
 			E_USER_DEPRECATED => "E_USER_DEPRECATED",
@@ -201,7 +202,7 @@ class MainLogger extends \AttachableThreadedLogger{
 	protected function send($message, $level, $prefix, $color){
 		$now = time();
 
-		$thread = \Thread::getCurrentThread();
+		$thread = \pmmp\thread\Thread::getCurrentThread();
 		if($thread === null){
 			$threadName = "Server thread";
 		}elseif($thread instanceof Thread or $thread instanceof Worker){
@@ -244,7 +245,7 @@ class MainLogger extends \AttachableThreadedLogger{
 		}
 	}
 
-	/*public function run(){
+	/*public function run() : void{
 		$this->shutdown = false;
 		if($this->write){
 			$this->logResource = fopen($this->logFile, "a+b");
@@ -278,7 +279,7 @@ class MainLogger extends \AttachableThreadedLogger{
 		}
 	}*/
 
-	public function run(){
+	public function run() : void{
 		$this->shutdown = false;
 		while($this->shutdown === false){
 			$this->synchronized(function(){

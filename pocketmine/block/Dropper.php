@@ -37,7 +37,7 @@ class Dropper extends Solid implements ElectricalAppliance{
 	protected $id = self::DROPPER;
 
 	public function __construct($meta = 0){
-		$this->meta = $meta;
+		$this->meta = (int) $meta;
 	}
 
 	public function canBeActivated() : bool {
@@ -56,7 +56,7 @@ class Dropper extends Solid implements ElectricalAppliance{
 		return Tool::TYPE_PICKAXE;
 	}
 
-	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, Player $player = null){
+	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, ?Player $player = null){
 		$dispenser = null;
 		if($player instanceof Player){
 			$pitch = $player->getPitch();
@@ -95,7 +95,7 @@ class Dropper extends Solid implements ElectricalAppliance{
 			}
 		}
 
-		Tile::createTile(Tile::DROPPER, $this->getLevel()->getChunk($this->x >> 4, $this->z >> 4), $nbt);
+		Tile::createTile(Tile::DROPPER, $this->getLevel()->getChunk((int) $this->x >> 4, (int) $this->z >> 4), $nbt);
 
 		return true;
 	}
@@ -107,7 +107,7 @@ class Dropper extends Solid implements ElectricalAppliance{
 		}
 	}
 
-	public function onActivate(Item $item, Player $player = null){
+	public function onActivate(Item $item, ?Player $player = null){
 		if($player instanceof Player){
 			$t = $this->getLevel()->getTile($this);
 			$dropper = null;
@@ -122,7 +122,7 @@ class Dropper extends Solid implements ElectricalAppliance{
 					new IntTag("z", $this->z)
 				]);
 				$nbt->Items->setTagType(NBT::TAG_Compound);
-				$dropper = Tile::createTile(Tile::DROPPER, $this->getLevel()->getChunk($this->x >> 4, $this->z >> 4), $nbt);
+				$dropper = Tile::createTile(Tile::DROPPER, $this->getLevel()->getChunk((int) $this->x >> 4, (int) $this->z >> 4), $nbt);
 			}
 
 			if($player->isCreative() and $player->getServer()->limitedCreative){

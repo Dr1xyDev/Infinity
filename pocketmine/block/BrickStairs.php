@@ -29,7 +29,7 @@ class BrickStairs extends Stair{
 	protected $id = self::BRICK_STAIRS;
 
 	public function __construct($meta = 0){
-		$this->meta = $meta;
+		$this->meta = (int) $meta;
 	}
 
 	public function getHardness() {

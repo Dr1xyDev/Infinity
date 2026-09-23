@@ -32,7 +32,7 @@ class FenceGate extends Transparent implements ElectricalAppliance{
 	protected $id = self::FENCE_GATE;
 
 	public function __construct($meta = 0){
-		$this->meta = $meta;
+		$this->meta = (int) $meta;
 	}
 
 	public function getName() : string{
@@ -80,7 +80,7 @@ class FenceGate extends Transparent implements ElectricalAppliance{
 		}
 	}
 
-	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, Player $player = null){
+	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, ?Player $player = null){
 		$faces = [
 			0 => 3,
 			1 => 0,
@@ -103,7 +103,7 @@ class FenceGate extends Transparent implements ElectricalAppliance{
 		];
 	}
 
-	public function onActivate(Item $item, Player $player = null){
+	public function onActivate(Item $item, ?Player $player = null){
 		$faces = [
 			0 => 3,
 			1 => 0,

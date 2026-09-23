@@ -3,10 +3,10 @@
 /*
  *
  *  ____            _        _   __  __ _                  __  __ ____  
- * |  _ \ ___   ___| | _____| |_|  \/  (_)_ __   ___      |  \/  |  _ \ 
+ * |  _ \ ___   ___| | _____| |_|  \/  (_)_ __   ___      |  \/ |  _ \ 
  * | |_) / _ \ / __| |/ / _ \ __| |\/| | | '_ \ / _ \_____| |\/| | |_) |
  * |  __/ (_) | (__|   <  __/ |_| |  | | | | | |  __/_____| |  | |  __/ 
- * |_|   \___/ \___|_|\_\___|\__|_|  |_|_|_| |_|\___|     |_|  |_|_| 
+ * |_|   \___/ \___|_|\_\___|\__|_|  |_|_|_| |_|\___/     |_|  |_|_| 
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,7 +15,7 @@
  *
  * @author PocketMine Team
  * @link http://www.pocketmine.net/
- * 
+ *
  *
 */
 
@@ -38,16 +38,23 @@ class RCON{
 
 	/** @var Server */
 	private $server;
-	private $socket;
+	/** @var string */
+	private $interface;
+	/** @var int */
+	private $port;
 	private $password;
 	/** @var RCONInstance[] */
 	private $workers = [];
+	/** @var int */
+	private $threads = 0;
 	private $clientsPerThread;
 
 	public function __construct(Server $server, $password, $port = 19132, $interface = "0.0.0.0", $threads = 1, $clientsPerThread = 50){
 		$this->server = $server;
 		$this->workers = [];
 		$this->password = (string) $password;
+		$this->interface = (string) $interface;
+		$this->port = (int) $port;
 		$this->server->getLogger()->info("Starting remote control listener");
 		if($this->password === ""){
 			$this->server->getLogger()->critical("RCON can't be started: Empty password");
@@ -56,29 +63,40 @@ class RCON{
 		}
 		$this->threads = (int) max(1, $threads);
 		$this->clientsPerThread = (int) max(1, $clientsPerThread);
-		$this->socket = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
-		if($this->socket === false or !socket_bind($this->socket, $interface, (int) $port) or !socket_listen($this->socket)){
-			$this->server->getLogger()->critical("RCON can't be started: " . socket_strerror(socket_last_error()));
+
+		for($n = 0; $n < $this->threads; ++$n){
+			$this->workers[$n] = new RCONInstance($this->server->getLogger(), $this->interface, $this->port, $this->password, $this->clientsPerThread);
+		}
+
+		//wait for the threads to bind their sockets
+		$deadline = microtime(true) + 5;
+		$boundOk = true;
+		foreach($this->workers as $worker){
+			while(!$worker->bound and !$worker->bindError and microtime(true) < $deadline){
+				$worker->synchronized(function(){
+					$this->wait(50000);
+				});
+			}
+			if($worker->bindError){
+				$boundOk = false;
+				$this->server->getLogger()->critical("RCON can't be started: " . $worker->bindError);
+			}
+		}
+		if(!$boundOk){
+			$this->stop();
 			$this->threads = 0;
 			return;
 		}
-		socket_set_block($this->socket);
-
-		for($n = 0; $n < $this->threads; ++$n){
-			$this->workers[$n] = new RCONInstance($this->server->getLogger(), $this->socket, $this->password, $this->clientsPerThread);
-		}
-		socket_getsockname($this->socket, $addr, $port);
-		$this->server->getLogger()->info("RCON running on $addr:$port");
+		$this->server->getLogger()->info("RCON running on $this->interface:$this->port");
 	}
 
 	public function stop(){
 		for($n = 0; $n < $this->threads; ++$n){
-			$this->workers[$n]->close();
-			Server::microSleep(50000);
-			$this->workers[$n]->close();
-			$this->workers[$n]->quit();
+			if(isset($this->workers[$n])){
+				$this->workers[$n]->close();
+				$this->workers[$n]->quit();
+			}
 		}
-		@socket_close($this->socket);
 		$this->threads = 0;
 	}
 
@@ -97,21 +115,25 @@ class RCON{
 			"usage" => $usage
 		]);
 		for($n = 0; $n < $this->threads; ++$n){
-			if(!$this->workers[$n]->isTerminated()){
-				$this->workers[$n]->serverStatus = $serverStatus;
+			if(!isset($this->workers[$n])){
+				continue;
 			}
-			if($this->workers[$n]->isTerminated() === true){
-				$this->workers[$n] = new RCONInstance($this->socket, $this->password, $this->clientsPerThread);
-			}elseif($this->workers[$n]->isWaiting()){
-				if($this->workers[$n]->response !== ""){
-					$this->server->getLogger()->info($this->workers[$n]->response);
-					$this->workers[$n]->synchronized(function(RCONInstance $thread){
-						$thread->notify();
-					}, $this->workers[$n]);
+			$worker = $this->workers[$n];
+			if(!$worker->isTerminated()){
+				$worker->serverStatus = $serverStatus;
+			}
+			if($worker->isTerminated() === true){
+				$this->workers[$n] = new RCONInstance($this->server->getLogger(), $this->interface, $this->port, $this->password, $this->clientsPerThread);
+			}elseif($worker->isWaiting()){
+				if($worker->response !== ""){
+					$this->server->getLogger()->info($worker->response);
+					$worker->synchronized(function(){
+						$this->notify();
+					});
 				}else{
 
 					$response = new RemoteConsoleCommandSender();
-					$command = $this->workers[$n]->cmd;
+					$command = $worker->cmd;
 
 					$this->server->getPluginManager()->callEvent($ev = new RemoteServerCommandEvent($response, $command));
 
@@ -119,10 +141,10 @@ class RCON{
 						$this->server->dispatchCommand($ev->getSender(), $ev->getCommand());
 					}
 
-					$this->workers[$n]->response = $response->getMessage();
-					$this->workers[$n]->synchronized(function(RCONInstance $thread){
-						$thread->notify();
-					}, $this->workers[$n]);
+					$worker->response = $response->getMessage();
+					$worker->synchronized(function(){
+						$this->notify();
+					});
 				}
 			}
 		}

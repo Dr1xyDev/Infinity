@@ -29,7 +29,7 @@ class AcaciaDoor extends Door{
 	protected $id = self::ACACIA_DOOR_BLOCK;
 
 	public function __construct($meta = 0){
-		$this->meta = $meta;
+		$this->meta = (int) $meta;
 	}
 
 	public function getName() : string{

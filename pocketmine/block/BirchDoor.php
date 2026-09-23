@@ -29,7 +29,7 @@ class BirchDoor extends Door{
 	protected $id = self::BIRCH_DOOR_BLOCK;
 
 	public function __construct($meta = 0){
-		$this->meta = $meta;
+		$this->meta = (int) $meta;
 	}
 
 	public function getName() : string{

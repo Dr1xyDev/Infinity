@@ -33,7 +33,7 @@ class Bed extends Transparent{
 	protected $id = self::BED_BLOCK;
 
 	public function __construct($meta = 0){
-		$this->meta = $meta;
+		$this->meta = (int) $meta;
 	}
 
 	public function canBeActivated() : bool {
@@ -59,7 +59,7 @@ class Bed extends Transparent{
 		);
 	}
 
-	public function onActivate(Item $item, Player $player = null){
+	public function onActivate(Item $item, ?Player $player = null){
 		if($this->getLevel()->getDimension() == Level::DIMENSION_NETHER){
 			$explosion = new Explosion($this, 6, $this);
 			$explosion->explode();
@@ -106,7 +106,7 @@ class Bed extends Transparent{
 		return true;
 	}
 
-	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, Player $player = null){
+	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, ?Player $player = null){
 		$down = $this->getSide(0);
 		if($down->isTransparent() === false){
 			$faces = [

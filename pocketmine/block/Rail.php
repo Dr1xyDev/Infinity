@@ -44,7 +44,7 @@ class Rail extends Flowable{
 	protected $connected = [];
 
 	public function __construct($meta = 0){
-		$this->meta = $meta;
+		$this->meta = (int) $meta;
 	}
 
 	public function getName() : string{
@@ -114,7 +114,7 @@ class Rail extends Flowable{
 		return true;
 	}
 
-	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, Player $player = null){
+	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, ?Player $player = null){
 		$downBlock = $this->getSide(Vector3::SIDE_DOWN);
 
 		if($downBlock instanceof Rail or !$this->isBlock($downBlock)){//判断是否可以放置

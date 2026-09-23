@@ -41,7 +41,7 @@ class Chunk extends BaseChunk{
 	/** @var CompoundTag */
 	protected $nbt;
 
-	public function __construct($level, CompoundTag $nbt = null){
+	public function __construct($level, ?CompoundTag $nbt = null){
 		if($nbt === null){
 			$this->provider = $level;
 			$this->nbt = new CompoundTag("Level", []);
@@ -168,7 +168,7 @@ class Chunk extends BaseChunk{
 	 *
 	 * @return Chunk
 	 */
-	public static function fromBinary($data, LevelProvider $provider = null){
+	public static function fromBinary($data, ?LevelProvider $provider = null){
 		$nbt = new NBT(NBT::BIG_ENDIAN);
 
 		try{
@@ -191,7 +191,7 @@ class Chunk extends BaseChunk{
 	 *
 	 * @return Chunk
 	 */
-	public static function fromFastBinary($data, LevelProvider $provider = null){
+	public static function fromFastBinary($data, ?LevelProvider $provider = null){
 		$nbt = new NBT(NBT::BIG_ENDIAN);
 
 		try{
@@ -341,7 +341,7 @@ class Chunk extends BaseChunk{
 	 *
 	 * @return Chunk
 	 */
-	public static function getEmptyChunk($chunkX, $chunkZ, LevelProvider $provider = null){
+	public static function getEmptyChunk($chunkX, $chunkZ, ?LevelProvider $provider = null){
 		try{
 			$chunk = new Chunk($provider instanceof LevelProvider ? $provider : Anvil::class, null);
 			$chunk->x = $chunkX;

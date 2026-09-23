@@ -34,7 +34,7 @@ class Cake extends Transparent implements FoodSource{
 	protected $id = self::CAKE_BLOCK;
 
 	public function __construct($meta = 0){
-		$this->meta = $meta;
+		$this->meta = (int) $meta;
 	}
 
 	public function canBeActivated() : bool{
@@ -63,7 +63,7 @@ class Cake extends Transparent implements FoodSource{
 		);
 	}
 
-	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, Player $player = null){
+	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, ?Player $player = null){
 		$down = $this->getSide(0);
 		if($down->getId() !== self::AIR){
 			$this->getLevel()->setBlock($block, $this, true, true);
@@ -90,7 +90,7 @@ class Cake extends Transparent implements FoodSource{
 		return [];
 	}
 
-	public function onActivate(Item $item, Player $player = null){
+	public function onActivate(Item $item, ?Player $player = null){
 		if($player instanceof Player and $player->getHealth() < $player->getMaxHealth()){
 			$ev = new EntityEatBlockEvent($player, $this);
 

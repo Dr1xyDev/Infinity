@@ -34,7 +34,7 @@ class PressurePlate extends RedstoneSource{
 	protected $canActivate = true;
 
 	public function __construct($meta = 0){
-		$this->meta = $meta;
+		$this->meta = (int) $meta;
 	}
 
 	public function hasEntityCollision(){
@@ -54,7 +54,7 @@ class PressurePlate extends RedstoneSource{
 		}
 	}
 
-	public function isActivated(Block $from = null){
+	public function isActivated(?Block $from = null){
 		return ($this->meta == 0) ? false : true;
 	}
 
@@ -97,7 +97,7 @@ class PressurePlate extends RedstoneSource{
 		return false;
 	}*/
 
-	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, Player $player = null){
+	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, ?Player $player = null){
 		$below = $this->getSide(Vector3::SIDE_DOWN);
 		if($below instanceof Transparent) return;
 		else $this->getLevel()->setBlock($block, $this, true, false);

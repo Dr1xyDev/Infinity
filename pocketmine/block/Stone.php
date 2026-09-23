@@ -37,7 +37,7 @@ class Stone extends Solid{
 	protected $id = self::STONE;
 
 	public function __construct($meta = 0){
-		$this->meta = $meta;
+		$this->meta = (int) $meta;
 
 	}
 

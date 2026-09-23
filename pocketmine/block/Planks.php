@@ -35,7 +35,7 @@ class Planks extends Solid{
 	protected $id = self::WOODEN_PLANKS;
 
 	public function __construct($meta = 0){
-		$this->meta = $meta;
+		$this->meta = (int) $meta;
 	}
 
 	public function getHardness() {

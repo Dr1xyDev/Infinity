@@ -104,7 +104,7 @@ class Portal extends Transparent{
 		parent::onBreak($item);
 	}
 	
-	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, Player $player = null){
+	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, ?Player $player = null){
 		if($player instanceof Player){
 			$this->meta = $player->getDirection() & 0x01;
 		}

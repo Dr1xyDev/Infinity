@@ -29,7 +29,7 @@ class MossStone extends Solid{
 	protected $id = self::MOSS_STONE;
 
 	public function __construct($meta = 0){
-		$this->meta = $meta;
+		$this->meta = (int) $meta;
 	}
 
 	public function getName() : string{

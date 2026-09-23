@@ -54,15 +54,15 @@ class DoubleChestInventory extends ChestInventory implements InventoryHolder{
 		return $index < $this->left->getSize() ? $this->left->getItem($index) : $this->right->getItem($index - $this->right->getSize());
 	}
 
-	public function setItem($index, Item $item){
-		return $index < $this->left->getSize() ? $this->left->setItem($index, $item) : $this->right->setItem($index - $this->right->getSize(), $item);
+	public function setItem($index, Item $item, $send = true){
+		return $index < $this->left->getSize() ? $this->left->setItem($index, $item, $send) : $this->right->setItem($index - $this->right->getSize(), $item, $send);
 	}
 
-	public function clear($index){
-		return $index < $this->left->getSize() ? $this->left->clear($index) : $this->right->clear($index - $this->right->getSize());
+	public function clear($index, $send = true){
+		return $index < $this->left->getSize() ? $this->left->clear($index, $send) : $this->right->clear($index - $this->right->getSize(), $send);
 	}
 
-	public function getContents(){
+	public function getContents($withAir = false){
 		$contents = [];
 		for($i = 0; $i < $this->getSize(); ++$i){
 			$contents[$i] = $this->getItem($i);
@@ -74,7 +74,7 @@ class DoubleChestInventory extends ChestInventory implements InventoryHolder{
 	/**
 	 * @param Item[] $items
 	 */
-	public function setContents(array $items){
+	public function setContents(array $items, $send = true){
 		if(count($items) > $this->size){
 			$items = array_slice($items, 0, $this->size, true);
 		}
@@ -84,13 +84,13 @@ class DoubleChestInventory extends ChestInventory implements InventoryHolder{
 			if(!isset($items[$i])){
 				if ($i < $this->left->size){
 					if(isset($this->left->slots[$i])){
-						$this->clear($i);
+						$this->clear($i, $send);
 					}
 				}elseif(isset($this->right->slots[$i - $this->left->size])){
-					$this->clear($i);
+					$this->clear($i, $send);
 				}
-			}elseif(!$this->setItem($i, $items[$i])){
-				$this->clear($i);
+			}elseif(!$this->setItem($i, $items[$i], $send)){
+				$this->clear($i, $send);
 			}
 		}
 	}

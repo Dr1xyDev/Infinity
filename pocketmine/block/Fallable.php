@@ -35,7 +35,7 @@ use pocketmine\Player;
 
 abstract class Fallable extends Solid{
 
-	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, Player $player = null){
+	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, ?Player $player = null){
 		$ret = $this->getLevel()->setBlock($this, $this, true, true);
 
 		return $ret;
@@ -45,7 +45,7 @@ abstract class Fallable extends Solid{
 		if($type === Level::BLOCK_UPDATE_NORMAL){
 			$down = $this->getSide(Vector3::SIDE_DOWN);
 			if($down->getId() === self::AIR or ($down instanceof Liquid)){
-				$fall = Entity::createEntity("FallingSand", $this->getLevel()->getChunk($this->x >> 4, $this->z >> 4), new CompoundTag("", [
+				$fall = Entity::createEntity("FallingSand", $this->getLevel()->getChunk((int) $this->x >> 4, (int) $this->z >> 4), new CompoundTag("", [
 					"Pos" => new ListTag("Pos", [
 						new DoubleTag("", $this->x + 0.5),
 						new DoubleTag("", $this->y),

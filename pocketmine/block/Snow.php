@@ -29,7 +29,7 @@ class Snow extends Solid{
 	protected $id = self::SNOW_BLOCK;
 
 	public function __construct($meta = 0){
-		$this->meta = $meta;
+		$this->meta = (int) $meta;
 	}
 
 	public function getHardness() {

@@ -36,7 +36,7 @@ class Furnace extends Solid{
 	protected $id = self::FURNACE;
 
 	public function __construct($meta = 0){
-		$this->meta = $meta;
+		$this->meta = (int) $meta;
 	}
 
 	public function getName() : string{
@@ -51,7 +51,7 @@ class Furnace extends Solid{
 		return 3.5;
 	}
 
-	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, Player $player = null){
+	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, ?Player $player = null){
 		$faces = [
 			0 => 4,
 			1 => 2,
@@ -79,7 +79,7 @@ class Furnace extends Solid{
 			}
 		}
 
-		Tile::createTile("Furnace", $this->getLevel()->getChunk($this->x >> 4, $this->z >> 4), $nbt);
+		Tile::createTile("Furnace", $this->getLevel()->getChunk((int) $this->x >> 4, (int) $this->z >> 4), $nbt);
 
 		return true;
 	}
@@ -90,7 +90,7 @@ class Furnace extends Solid{
 		return true;
 	}
 
-	public function onActivate(Item $item, Player $player = null){
+	public function onActivate(Item $item, ?Player $player = null){
 		if($player instanceof Player){
 			$t = $this->getLevel()->getTile($this);
 			if($t instanceof FurnaceTile){
@@ -104,7 +104,7 @@ class Furnace extends Solid{
 					new IntTag("z", $this->z)
 				]);
 				$nbt->Items->setTagType(NBT::TAG_Compound);
-				$furnace = Tile::createTile("Furnace", $this->getLevel()->getChunk($this->x >> 4, $this->z >> 4), $nbt);
+				$furnace = Tile::createTile("Furnace", $this->getLevel()->getChunk((int) $this->x >> 4, (int) $this->z >> 4), $nbt);
 			}
 
 			if(isset($furnace->namedtag->Lock) and $furnace->namedtag->Lock instanceof StringTag){

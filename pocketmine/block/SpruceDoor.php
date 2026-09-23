@@ -29,7 +29,7 @@ class SpruceDoor extends Door{
 	protected $id = self::SPRUCE_DOOR_BLOCK;
 
 	public function __construct($meta = 0){
-		$this->meta = $meta;
+		$this->meta = (int) $meta;
 	}
 
 	public function getName() : string{

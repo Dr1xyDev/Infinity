@@ -48,7 +48,7 @@ class SkullBlock extends Transparent{
 	protected $id = self::SKULL_BLOCK;
 
 	public function __construct($meta = 0){
-		$this->meta = $meta;
+		$this->meta = (int) $meta;
 	}
 
 	public function getHardness() {
@@ -74,7 +74,7 @@ class SkullBlock extends Transparent{
 		);
 	}
 
-	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, Player $player = null){
+	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, ?Player $player = null){
 		$down = $this->getSide(0);
 		if($face !== 0 && $fy > 0.5 && $target->getId() !== self::SKULL_BLOCK && !$down instanceof SkullBlock){
 			$this->getLevel()->setBlock($block, Block::get(Block::SKULL_BLOCK, 0), true, true);
@@ -98,7 +98,7 @@ class SkullBlock extends Transparent{
 			    }
 			}
 
-			$chunk = $this->getLevel()->getChunk($this->x >> 4, $this->z >> 4);
+			$chunk = $this->getLevel()->getChunk((int) $this->x >> 4, (int) $this->z >> 4);
 			$pot = Tile::createTile(Tile::SKULL, $chunk, $nbt);
 			$this->getLevel()->setBlock($block, Block::get(Block::SKULL_BLOCK, $face), true, true);
 			return true;

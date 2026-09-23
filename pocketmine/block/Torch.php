@@ -30,7 +30,7 @@ class Torch extends Flowable{
 	protected $id = self::TORCH;
 
 	public function __construct($meta = 0){
-		$this->meta = $meta;
+		$this->meta = (int) $meta;
 	}
 
 	public function getLightLevel(){
@@ -72,7 +72,7 @@ class Torch extends Flowable{
 		return false;
 	}
 
-	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, Player $player = null){
+	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, ?Player $player = null){
 		$below = $this->getSide(0);
 
 		if($target->isTransparent() === false and $face !== 0){

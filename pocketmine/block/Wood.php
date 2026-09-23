@@ -36,7 +36,7 @@ class Wood extends Solid{
 	protected $id = self::WOOD;
 
 	public function __construct($meta = 0){
-		$this->meta = $meta;
+		$this->meta = (int) $meta;
 	}
 
 	public function getHardness() {
@@ -61,7 +61,7 @@ class Wood extends Solid{
 		return 10;
 	}
 
-	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, Player $player = null){
+	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, ?Player $player = null){
 		$faces = [
 			0 => 0,
 			1 => 0,

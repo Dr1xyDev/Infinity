@@ -327,7 +327,7 @@ class Block extends Position implements BlockIds, Metadatable{
 	 *
 	 * @return Block
 	 */
-	public static function get($id, $meta = 0, Position $pos = null){
+	public static function get($id, $meta = 0, ?Position $pos = null){
 		if($id > 0xff){
 			trigger_error("BlockID cannot be higher than 255, defaulting to 0", E_USER_NOTICE);
 			$id = 0;
@@ -376,7 +376,7 @@ class Block extends Position implements BlockIds, Metadatable{
 	 *
 	 * @return bool
 	 */
-	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, Player $player = null){
+	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, ?Player $player = null){
 		return $this->getLevel()->setBlock($this, $this, true, true);
 	}
 
@@ -425,7 +425,7 @@ class Block extends Position implements BlockIds, Metadatable{
 	 *
 	 * @return bool
 	 */
-	public function onActivate(Item $item, Player $player = null){
+	public function onActivate(Item $item, ?Player $player = null){
 		return false;
 	}
 
@@ -561,7 +561,7 @@ class Block extends Position implements BlockIds, Metadatable{
 		return false;
 	}
 
-	public function isActivated(Block $from = null){
+	public function isActivated(?Block $from = null){
 		return false;
 	}
 

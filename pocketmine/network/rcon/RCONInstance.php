@@ -3,10 +3,10 @@
 /*
  *
  *  ____            _        _   __  __ _                  __  __ ____  
- * |  _ \ ___   ___| | _____| |_|  \/  (_)_ __   ___      |  \/  |  _ \ 
+ * |  _ \ ___   ___| | _____| |_|  \/  (_)_ __   ___      |  \/ |  _ \ 
  * | |_) / _ \ / __| |/ / _ \ __| |\/| | | '_ \ / _ \_____| |\/| | |_) |
  * |  __/ (_) | (__|   <  __/ |_| |  | | | | | |  __/_____| |  | |  __/ 
- * |_|   \___/ \___|_|\_\___|\__|_|  |_|_|_| |_|\___|     |_|  |_|_| 
+ * |_|   \___/ \___|_|\_\___|\__|_|  |_|_|_| |_|\___/     |_|  |_|_| 
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -21,35 +21,58 @@
 
 namespace pocketmine\network\rcon;
 
-use pocketmine\Thread;
+use pocketmine\thread\Thread;
 use pocketmine\utils\Binary;
 use pocketmine\utils\MainLogger;
 
+/**
+ * RCON listener thread. The socket is created, bound and used entirely inside
+ * the thread context, because pmmpthread does not allow raw socket resources
+ * to be stored in ThreadSafe properties.
+ */
 class RCONInstance extends Thread{
+	/** @var bool */
 	public $stop;
+	/** @var string */
 	public $cmd;
+	/** @var string */
 	public $response;
-	private $socket;
+	/** @var resource|null */
+	private $socket = null;
+	/** @var string */
+	private $interface;
+	/** @var int */
+	private $port;
 	private $password;
 	private $maxClients;
-	private $waiting;
+	/** @var bool */
+	private $waiting = false;
 
 	/** @var MainLogger */
 	private $logger;
 
-	public $serverStatus;
+	/** @var string */
+	public $serverStatus = "";
+
+	/** @var bool */
+	public $bound = false;
+	/** @var string */
+	public $bindError = "";
 
 	public function isWaiting(){
 		return $this->waiting === true;
 	}
 
-
-	public function __construct($logger, $socket, $password, $maxClients = 50){
+	/**
+	 * @param MainLogger $logger
+	 */
+	public function __construct($logger, string $interface, int $port, $password, $maxClients = 50){
 		$this->logger = $logger;
 		$this->stop = false;
 		$this->cmd = "";
 		$this->response = "";
-		$this->socket = $socket;
+		$this->interface = $interface;
+		$this->port = $port;
 		$this->password = $password;
 		$this->maxClients = (int) $maxClients;
 		for($n = 0; $n < $this->maxClients; ++$n){
@@ -59,6 +82,21 @@ class RCONInstance extends Thread{
 		}
 
 		$this->start();
+	}
+
+	private function bind() : bool{
+		$this->socket = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
+		if($this->socket === false){
+			$this->bindError = "socket_create failed";
+			return false;
+		}
+		socket_set_option($this->socket, SOL_SOCKET, SO_REUSEADDR, 1);
+		if(!@socket_bind($this->socket, $this->interface, $this->port) or !@socket_listen($this->socket)){
+			$this->bindError = socket_strerror(socket_last_error($this->socket));
+			return false;
+		}
+		socket_set_block($this->socket);
+		return true;
 	}
 
 	private function writePacket($client, $requestID, $packetType, $payload){
@@ -92,19 +130,32 @@ class RCONInstance extends Thread{
 
 	public function close(){
 		$this->stop = true;
+		$this->notify();
 	}
 
-	public function run(){
+	public function run() : void{
+		if(!$this->bind()){
+			$this->bound = false;
+			$this->stop = true;
+			return;
+		}
+		$this->bound = true;
+		$this->synchronized(function(){
+			$this->notify(); //wake up the main thread waiting for the bind result
+		});
 
 		while($this->stop !== true){
 			$this->synchronized(function(){
 				$this->wait(2000);
 			});
-			$r = [$socket = $this->socket];
+			if($this->socket === null){
+				break;
+			}
+			$r = [$this->socket];
 			$w = null;
 			$e = null;
-			if(socket_select($r, $w, $e, 0) === 1){
-				if(($client = socket_accept($this->socket)) !== false){
+			if(@socket_select($r, $w, $e, 0, 100000) === 1){
+				if(($client = @socket_accept($this->socket)) !== false){
 					socket_set_block($client);
 					socket_set_option($client, SOL_SOCKET, SO_KEEPALIVE, 1);
 					$done = false;
@@ -124,7 +175,7 @@ class RCONInstance extends Thread{
 			}
 
 			for($n = 0; $n < $this->maxClients; ++$n){
-				$client = &$this->{"client" . $n};
+				$client = $this->{"client" . $n};
 				if($client !== null){
 					if($this->{"status" . $n} !== -1 and $this->stop !== true){
 						if($this->{"status" . $n} === 0 and $this->{"timeout" . $n} < microtime(true)){ //Timeout
@@ -210,8 +261,11 @@ class RCONInstance extends Thread{
 				}
 			}
 		}
-		unset($this->socket, $this->cmd, $this->response, $this->stop);
-		exit(0);
+		if($this->socket !== null){
+			@socket_close($this->socket);
+			$this->socket = null;
+		}
+		unset($this->cmd, $this->response, $this->stop);
 	}
 
 	public function getThreadName(){

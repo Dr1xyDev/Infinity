@@ -38,10 +38,10 @@ class BrewingStand extends Transparent{
 	protected $id = self::BREWING_STAND_BLOCK;
 
 	public function __construct($meta = 0){
-		$this->meta = $meta;
+		$this->meta = (int) $meta;
 	}
 
-	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, Player $player = null){
+	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, ?Player $player = null){
 		if($block->getSide(Vector3::SIDE_DOWN)->isTransparent() === false){
 			$this->getLevel()->setBlock($block, $this, true, true);
 			$nbt = new CompoundTag("", [
@@ -62,7 +62,7 @@ class BrewingStand extends Transparent{
 				}
 			}
 
-			Tile::createTile(Tile::BREWING_STAND, $this->getLevel()->getChunk($this->x >> 4, $this->z >> 4), $nbt);
+			Tile::createTile(Tile::BREWING_STAND, $this->getLevel()->getChunk((int) $this->x >> 4, (int) $this->z >> 4), $nbt);
 
 			return true;
 		}
@@ -89,7 +89,7 @@ class BrewingStand extends Transparent{
 		return "Brewing Stand";
 	}
 
-	public function onActivate(Item $item, Player $player = null){
+	public function onActivate(Item $item, ?Player $player = null){
 		if($player instanceof Player){
 			//TODO lock
 			if($player->isCreative() and $player->getServer()->limitedCreative){
@@ -108,7 +108,7 @@ class BrewingStand extends Transparent{
 					new IntTag("z", $this->z)
 				]);
 				$nbt->Items->setTagType(NBT::TAG_Compound);
-				$brewingStand = Tile::createTile(Tile::BREWING_STAND, $this->getLevel()->getChunk($this->x >> 4, $this->z >> 4), $nbt);
+				$brewingStand = Tile::createTile(Tile::BREWING_STAND, $this->getLevel()->getChunk((int) $this->x >> 4, (int) $this->z >> 4), $nbt);
 			}
 			$player->addWindow($brewingStand->getInventory());
 		}

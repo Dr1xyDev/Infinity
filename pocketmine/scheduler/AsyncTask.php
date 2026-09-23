@@ -2,11 +2,11 @@
 
 /*
  *
- *  ____            _        _   __  __ _                  __  __ ____
- * |  _ \ ___   ___| | _____| |_|  \/  (_)_ __   ___      |  \/  |  _ \
+ *  ____            _        _   __  __ _                  __  __ ____  
+ * |  _ \ ___   ___| | _____| |_|  \/  (_)_ __   ___      |  \/ |  _ \ 
  * | |_) / _ \ / __| |/ / _ \ __| |\/| | | '_ \ / _ \_____| |\/| | |_) |
- * |  __/ (_) | (__|   <  __/ |_| |  | | | | | |  __/_____| |  | |  __/
- * |_|   \___/ \___|_|\_\___|\__|_|  |_|_|_| |_|\___|     |_|  |_|_|
+ * |  __/ (_) | (__|   <  __/ |_| |  | | | | | |  __/_____| |  | |  __/ 
+ * |_|   \___/ \___|_|\_\___|\__|_|  |_|_|_| |_|\___/     |_|  |_|_| 
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -21,6 +21,7 @@
 
 namespace pocketmine\scheduler;
 
+use pmmp\thread\Runnable as ThreadSafeRunnable;
 use pocketmine\Server;
 
 /**
@@ -28,15 +29,18 @@ use pocketmine\Server;
  *
  * WARNING: Do not call PocketMine-MP API methods, or save objects from/on other Threads!!
  */
-abstract class AsyncTask extends \Threaded implements \Collectable{
+abstract class AsyncTask extends ThreadSafeRunnable{
 
-	/** @var AsyncWorker $worker */
+	/** @var AsyncWorker|null */
 	public $worker = null;
+
+	/** @var mixed|null */
+	public $_progress = null;
 
 	private $result = null;
 	private $serialized = false;
 	private $cancelRun = false;
-	/** @var int */
+	/** @var int|null */
 	private $taskId = null;
 
 	private $crashed = false;
@@ -57,7 +61,7 @@ abstract class AsyncTask extends \Threaded implements \Collectable{
 		return $this->isFinished;
 	}
 
-	public function run(){
+	public function run() : void{
 		$this->result = null;
 		$this->isGarbage = false;
 
@@ -66,12 +70,13 @@ abstract class AsyncTask extends \Threaded implements \Collectable{
 				$this->onRun();
 			}catch(\Throwable $e){
 				$this->crashed = true;
-				$this->worker->handleException($e);
+				if($this->worker !== null){
+					$this->worker->handleException($e);
+				}
 			}
 		}
 
 		$this->isFinished = true;
-		//$this->setGarbage();
 	}
 
 	public function isCrashed(){
@@ -126,7 +131,7 @@ abstract class AsyncTask extends \Threaded implements \Collectable{
 	 */
 	public function getFromThreadStore($identifier){
 		global $store;
-		return $this->isGarbage() ? null : $store[$identifier];
+		return $this->isGarbage() ? null : ($store[$identifier] ?? null);
 	}
 
 	/**
@@ -164,7 +169,11 @@ abstract class AsyncTask extends \Threaded implements \Collectable{
 
 	public function cleanObject(){
 		foreach($this as $p => $v){
-			if(!($v instanceof \Threaded) and !in_array($p, ["isFinished", "isGarbage", "cancelRun"])){
+			if(!is_string($p) or $p === "" or $p[0] === "\0"){
+				//skip internal / mangled properties (pmmpthread internals)
+				continue;
+			}
+			if(!($v instanceof ThreadSafeRunnable) and !in_array($p, ["isFinished", "isGarbage", "cancelRun", "_progress"])){
 				$this->{$p} = null;
 			}
 		}

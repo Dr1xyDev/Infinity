@@ -341,7 +341,7 @@ interface FullChunk{
 	 *
 	 * @return FullChunk
 	 */
-	public static function fromBinary($data, LevelProvider $provider = null);
+	public static function fromBinary($data, ?LevelProvider $provider = null);
 
 	/**
 	 * @param string        $data
@@ -349,7 +349,7 @@ interface FullChunk{
 	 *
 	 * @return FullChunk
 	 */
-	public static function fromFastBinary($data, LevelProvider $provider = null);
+	public static function fromFastBinary($data, ?LevelProvider $provider = null);
 
 	/**
 	 * @param int           $chunkX
@@ -358,6 +358,6 @@ interface FullChunk{
 	 *
 	 * @return FullChunk
 	 */
-	public static function getEmptyChunk($chunkX, $chunkZ, LevelProvider $provider = null);
+	public static function getEmptyChunk($chunkX, $chunkZ, ?LevelProvider $provider = null);
 
 }

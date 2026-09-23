@@ -20,7 +20,7 @@ interface ClassLoader{
     /**
      * @param ClassLoader $parent
      */
-    public function __construct(ClassLoader $parent = null);
+    public function __construct(?ClassLoader $parent = null);
 
     /**
      * Adds a path to the lookup list

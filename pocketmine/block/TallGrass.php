@@ -34,7 +34,7 @@ class TallGrass extends Flowable{
 	protected $id = self::TALL_GRASS;
 
 	public function __construct($meta = 1){
-		$this->meta = $meta;
+		$this->meta = (int) $meta;
 	}
 
 	public function canBeReplaced(){
@@ -59,7 +59,7 @@ class TallGrass extends Flowable{
 		return 100;
 	}
 
-	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, Player $player = null){
+	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, ?Player $player = null){
 		$down = $this->getSide(0);
 		if($down->getId() === self::GRASS){
 			$this->getLevel()->setBlock($block, $this, true);

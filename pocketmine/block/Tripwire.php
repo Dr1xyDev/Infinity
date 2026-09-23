@@ -28,7 +28,7 @@ class Tripwire extends Transparent{
 	protected $id = self::TRIPWIRE;
 
 	public function __construct($meta = 0){
-		$this->meta = $meta;
+		$this->meta = (int) $meta;
 	}
 
 	public function getName() : string{

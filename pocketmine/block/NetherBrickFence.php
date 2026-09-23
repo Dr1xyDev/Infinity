@@ -29,7 +29,7 @@ class NetherBrickFence extends Transparent {
 	protected $id = self::NETHER_BRICK_FENCE;
 	
 	public function __construct($meta = 0){
-		$this->meta = $meta;
+		$this->meta = (int) $meta;
 	}
 	
 	public function getBreakTime(Item $item){

@@ -29,7 +29,7 @@ class StainedClay extends Solid{
 	protected $id = self::STAINED_CLAY;
 
 	public function __construct($meta = 0){
-		$this->meta = $meta;
+		$this->meta = (int) $meta;
 	}
 
 	public function getHardness() {

@@ -63,7 +63,7 @@ class ChunkInfoCommand extends VanillaCommand{
 		}
 
 		if(!isset($args[4]) or $args[0] != "regenerate"){
-			$chunk = $pos->getLevel()->getChunk($pos->x >> 4, $pos->z >> 4);
+			$chunk = $pos->getLevel()->getChunk((int) $pos->x >> 4, (int) $pos->z >> 4);
 			McRegion::getRegionIndex($chunk->getX(), $chunk->getZ(), $x, $z);
 
 			$sender->sendMessage("Region X: $x Region Z: $z");
@@ -73,7 +73,7 @@ class ChunkInfoCommand extends VanillaCommand{
 					$p->kick(TextFormat::AQUA . "A chunk of this chunk is regenerating, please re-login.", false);
 				}
 			}
-			$pos->getLevel()->regenerateChunk($pos->x >> 4, $pos->z >> 4);
+			$pos->getLevel()->regenerateChunk((int) $pos->x >> 4, (int) $pos->z >> 4);
 		}
 
 		return true;

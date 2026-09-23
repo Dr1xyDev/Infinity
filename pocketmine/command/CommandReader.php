@@ -21,30 +21,33 @@
 
 namespace pocketmine\command;
 
-use pocketmine\Thread;
+use pmmp\thread\Thread as PmmpThread;
+
+use pocketmine\thread\Thread;
 use pocketmine\utils\MainLogger;
 use pocketmine\utils\Utils;
 
 class CommandReader extends Thread{
 	private $readline;
-	/** @var \Threaded */
+	/** @var \pmmp\thread\ThreadSafeArray */
 	protected $buffer;
 	private $shutdown = false;
-	private $stdin;
+	private $stdinId = -1;
 	/** @var MainLogger */
 	private $logger;
 
 	public function __construct($logger){
-		$this->stdin = fopen("php://stdin", "r");
+		$stdin = $this->getStdinResource();
+		unset($stdin);
 		$opts = getopt("", ["disable-readline"]);
-		if(extension_loaded("readline") && !isset($opts["disable-readline"]) && (!function_exists("posix_isatty") || posix_isatty($this->stdin))){
+		if(extension_loaded("readline") && !isset($opts["disable-readline"]) && (!function_exists("posix_isatty") || posix_isatty($this->getStdinResource()))){
 			$this->readline = true;
 		}else{
 			$this->readline = false;
 		}
 		$this->logger = $logger;
-		$this->buffer = new \Threaded;
-		$this->start();
+		$this->buffer = new \pmmp\thread\ThreadSafeArray;
+		$this->start(PmmpThread::INHERIT_ALL);
 	}
 
 	public function shutdown(){
@@ -60,7 +63,7 @@ class CommandReader extends Thread{
 
 	private function readLine(){
 		if(!$this->readline){
-			$line = trim(fgets($this->stdin));
+			$line = trim((string) fgets($this->getStdinResource()));
 			if($line !== ""){
 				$this->buffer[] = $line;
 			}
@@ -82,7 +85,7 @@ class CommandReader extends Thread{
 		return null;
 	}
 
-	public function quit(){
+	public function quit() : void{
 		$this->shutdown();
 		// Windows sucks
 		if(Utils::getOS() !== "win"){
@@ -90,29 +93,54 @@ class CommandReader extends Thread{
 		}
 	}
 
-	public function run(){
+	/**
+	 * Returns an open stdin stream resource, re-opening it if necessary.
+	 * The resource is kept alive by the caller until used.
+	 */
+	private function getStdinResource(){
+		foreach(get_resources() as $res){
+			if((int) $res === $this->stdinId and get_resource_type($res) === "stream"){
+				return $res;
+			}
+		}
+		$stdin = fopen("php://stdin", "r");
+		if($stdin === false){
+			return false;
+		}
+		$this->stdinId = (int) $stdin;
+		return $stdin;
+	}
+
+		public function run() : void{
 		if($this->readline){
 			readline_callback_handler_install("Genisys> ", [$this, "readline_callback"]);
 			$this->logger->setConsoleCallback("readline_redisplay");
 		}
 
 		while(!$this->shutdown){
-			$r = [$this->stdin];
+			$stdin = $this->getStdinResource();
+			if($stdin === false){
+				break;
+			}
+			$r = [$stdin];
 			$w = null;
 			$e = null;
 			if(stream_select($r, $w, $e, 0, 200000) > 0){
 				// PHP on Windows sucks
-				if(feof($this->stdin)){
+				if(feof($stdin)){
 					if(Utils::getOS() == "win"){
-						$this->stdin = fopen("php://stdin", "r");
-						if(!is_resource($this->stdin)){
+						$stdin = fopen("php://stdin", "r");
+						if($stdin === false){
 							break;
 						}
+						$this->stdinId = (int) $stdin;
+						unset($stdin);
 					}else{
 						break;
 					}
+				}else{
+					$this->readLine();
 				}
-				$this->readLine();
 			}
 		}
 

@@ -32,7 +32,7 @@ class RedstoneTorch extends RedstoneSource{
 	protected $ignore = "";
 
 	public function __construct($meta = 0){
-		$this->meta = $meta;
+		$this->meta = (int) $meta;
 	}
 
 	public function getLightLevel(){
@@ -224,7 +224,7 @@ class RedstoneTorch extends RedstoneSource{
 		$this->getLevel()->setBlockTempData($this);
 	}
 
-	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, Player $player = null){
+	public function place(Item $item, Block $block, Block $target, $face, $fx, $fy, $fz, ?Player $player = null){
 		$below = $this->getSide(0);
 
 		if($target->isTransparent() === false and $face !== 0){
@@ -260,7 +260,7 @@ class RedstoneTorch extends RedstoneSource{
 		];
 	}
 
-	public function isActivated(Block $from = null){
+	public function isActivated(?Block $from = null){
 		return true;
 	}
 }
