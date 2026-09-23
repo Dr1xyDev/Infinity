@@ -72,12 +72,12 @@ namespace pocketmine {
 	use pocketmine\utils\Utils;
 	use pocketmine\wizard\Installer;
 
-	const VERSION = "80faae0"; //will be set by CI to a git hash
+	const VERSION = "1.2 - Release"; //will be set by CI to a git hash
 	const API_VERSION = "2.0.0";
-	const CODENAME = "Kyrios";
-	const MINECRAFT_VERSION = "v0.15.10 alpha";
+	const CODENAME = "github.com/Dr1xyDev/Infinity";
+	const MINECRAFT_VERSION = "v0.15.10 Legacy";
 	const MINECRAFT_VERSION_NETWORK = "0.15.10";
-	const GENISYS_API_VERSION = '1.9.3';
+	const GENISYS_API_VERSION = '2.0.0';
 
 	/*
 	 * Startup code. Do not look at it, it may harm you.
