@@ -30,6 +30,7 @@ jobs:
           cp -r pocketmine build/src/
           cp -r raklib build/src/
           cp -r spl build/src/
+          cp -r synapse build/src/
 
       - name: Crear builder
         run: |
@@ -58,7 +59,7 @@ jobs:
 
           $phar->stopBuffering();
 
-          echo "Infinity.phar creado correctamente.\n";
+          echo "Infinity.phar build sucessfully\n";
           PHP
 
       - name: Compilar PHAR
@@ -80,5 +81,5 @@ jobs:
             exit 0
           fi
 
-          git commit -m "Actualizar Infinity.phar"
+          git commit -m "Update Infinity.phar"
           git push origin HEAD
