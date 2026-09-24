@@ -70,7 +70,6 @@ namespace pocketmine {
 	use pocketmine\utils\ServerKiller;
 	use pocketmine\utils\Terminal;
 	use pocketmine\utils\Utils;
-	use pocketmine\wizard\Installer;
 
 	const VERSION = "1.2 - Release"; //will be set by CI to a git hash
 	const API_VERSION = "2.0.0";
@@ -128,7 +127,7 @@ namespace pocketmine {
 	ini_set("memory_limit", -1);
 	define('pocketmine\START_TIME', microtime(true));
 
-	$opts = getopt("", ["data:", "plugins:", "no-wizard", "enable-profiler"]);
+	$opts = getopt("", ["data:", "plugins:", "enable-profiler"]);
 
 	define('pocketmine\DATA', isset($opts["data"]) ? $opts["data"] . DIRECTORY_SEPARATOR : \getcwd() . DIRECTORY_SEPARATOR);
 	define('pocketmine\PLUGIN_PATH', isset($opts["plugins"]) ? $opts["plugins"] . DIRECTORY_SEPARATOR : \getcwd() . DIRECTORY_SEPARATOR . "plugins" . DIRECTORY_SEPARATOR);
@@ -463,10 +462,6 @@ namespace pocketmine {
 	@ini_set("opcache.mmap_base", bin2hex(random_bytes(8))); //Fix OPCache address errors
 
 	$lang = "unknown";
-	if(!file_exists(\pocketmine\DATA . "server.properties") and !isset($opts["no-wizard"])){
-		$inst = new Installer();
-		$lang = $inst->getDefaultLang();
-	}
 
 	/*if(\Phar::running(true) === ""){
 		$logger->warning("Non-packaged PocketMine-MP installation detected, do not use on production.");

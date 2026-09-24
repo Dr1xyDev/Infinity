@@ -2537,7 +2537,9 @@ class Level implements ChunkManager, Metadatable{
 	 *
 	 * @return int 0-127
 	 */
-	public function getHighestBlockAt(int $x, int $z) : int{
+	public function getHighestBlockAt($x, $z) : int{
+		$x = (int) $x;
+		$z = (int) $z;
 		return $this->getChunk($x >> 4, $z >> 4, true)->getHighestBlockAt($x & 0x0f, $z & 0x0f);
 	}
 
