@@ -110,7 +110,10 @@ class Normal extends Generator{
 
 	public function pickBiome($x, $z){
 		$hash = $x * 2345803 ^ $z * 9236449 ^ $this->level->getSeed();
-		$hash *= $hash + 223;
+		//PHP 8.4: wrap to signed 64-bit to avoid int overflow to float (deprecated implicit float->int conversion on shift)
+		$hash = fmod($hash * ($hash + 223), 18446744073709551616);
+		if($hash >= 9223372036854775808){ $hash -= 18446744073709551616; }
+		$hash = (int) $hash;
 		$xNoise = $hash >> 20 & 3;
 		$zNoise = $hash >> 22 & 3;
 		if($xNoise == 3){

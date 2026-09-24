@@ -111,8 +111,11 @@ class AsyncPool{
 			if(!$force and ($task->isRunning() or !$task->isGarbage())){
 				return;
 			}
+			//pmmpthread (PHP 8.4): pthreads-v3 Worker::collector() no longer releases anything;
+		//Worker::collect() is what removes finished tasks from the worker's internal GC queue.
+		//Without this, every completed task (including its chunk payloads) stays referenced forever -> RAM leak.
 			$this->workerUsage[$this->taskWorkers[$task->getTaskId()]]--;
-			$this->workers[$this->taskWorkers[$task->getTaskId()]]->collector($task);
+			$this->workers[$this->taskWorkers[$task->getTaskId()]]->collect();
 		}
 
 		unset($this->tasks[$task->getTaskId()]);
@@ -155,6 +158,15 @@ class AsyncPool{
 			}elseif($task->isTerminated() or $task->isCrashed()){
 				$this->server->getLogger()->critical("Could not execute asynchronous task " . (new \ReflectionClass($task))->getShortName() . ": Task crashed");
 				$this->removeTask($task, true);
+			}
+		}
+
+		//pmmpthread safety net (same pattern as PocketMine-MP 5): drain each worker's GC queue every tick.
+		//Finished tasks wait in the worker's internal gc queue until collect() is called; getStacked() does NOT
+		//count them. collect() is a cheap no-op when the queue is empty, so this is safe to run every tick.
+		for($i = 0; $i < $this->size; ++$i){
+			if(isset($this->workers[$i])){
+				$this->workers[$i]->collect();
 			}
 		}
 
