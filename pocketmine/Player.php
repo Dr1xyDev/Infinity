@@ -259,6 +259,9 @@ class Player extends Human implements CommandSender, InventoryHolder, ChunkLoade
 	protected $viewDistance;
 	protected $chunksPerTick;
 	protected $spawnThreshold;
+
+	/** @var int render distance en chunks pedida por el cliente (RequestChunkRadiusPacket) */
+	protected $clientChunkRadius = -1;
 	/** @var null|Position */
 	protected $spawnPosition = null;
 
@@ -713,6 +716,7 @@ class Player extends Human implements CommandSender, InventoryHolder, ChunkLoade
 		$this->loaderId = Level::generateChunkLoaderId($this);
 		$this->chunksPerTick = (int) $this->server->getProperty("chunk-sending.per-tick", 4);
 		$this->spawnThreshold = (int) $this->server->getProperty("chunk-sending.spawn-threshold", 56);
+		$this->clientChunkRadius = -1;
 		$this->spawnPosition = null;
 		$this->gamemode = $this->server->getGamemode();
 		$this->setLevel($this->server->getDefaultLevel());
@@ -924,18 +928,21 @@ class Player extends Human implements CommandSender, InventoryHolder, ChunkLoade
 			$Z = null;
 			Level::getXZ($index, $X, $Z);
 
-			++$count;
-
-			$this->usedChunks[$index] = false;
-			$this->level->registerChunkLoader($this, $X, $Z, true);
-
+			//poblacion bloqueada: reencolar al final para no reintentar el mismo chunk cada tick
 			if(!$this->level->populateChunk($X, $Z)){
 				if($this->spawned and $this->teleportPosition === null){
+					unset($this->loadQueue[$index]);
+					$this->loadQueue[$index] = $distance;
 					continue;
 				}else{
 					break;
 				}
 			}
+
+			++$count;
+
+			$this->usedChunks[$index] = false;
+			$this->level->registerChunkLoader($this, $X, $Z, true);
 
 			unset($this->loadQueue[$index]);
 			$this->level->requestChunk($X, $Z, $this);
@@ -963,6 +970,9 @@ class Player extends Human implements CommandSender, InventoryHolder, ChunkLoade
 
 	protected function doFirstSpawn(){
 		$this->spawned = true;
+
+		//vanilla: completar la espiral hasta el radio completo al aparecer
+		$this->orderChunks();
 
 		$this->sendPotionEffects($this);
 		$this->sendData($this);
@@ -1050,9 +1060,14 @@ class Player extends Human implements CommandSender, InventoryHolder, ChunkLoade
 
 		Timings::$playerChunkOrderTimer->startTiming();
 
-		$this->nextChunkOrderRun = 200;
+		$this->nextChunkOrderRun = 5;
 
 		$viewDistance = $this->server->getMemoryManager()->getViewDistance($this->viewDistance);
+		if($this->spawned and $this->clientChunkRadius > $viewDistance){
+			$viewDistance = $this->clientChunkRadius;
+		}
+
+		$radiusSquared = $viewDistance ** 2;
 
 		$newOrder = [];
 		$lastChunk = $this->usedChunks;
@@ -1060,47 +1075,61 @@ class Player extends Human implements CommandSender, InventoryHolder, ChunkLoade
 		$centerX = (int) $this->x >> 4;
 		$centerZ = (int) $this->z >> 4;
 
-		$layer = 1;
-		$leg = 0;
-		$x = 0;
-		$z = 0;
+		//espiral vanilla: cubrir TODOS los chunks dentro del radio, ordenados de cerca a lejos
+		for($x = 0; $x < $viewDistance; ++$x){
+			for($z = 0; $z <= $x; ++$z){
+				if(($x ** 2 + $z ** 2) > $radiusSquared){
+					break; //saltar a la siguiente banda
+				}
 
-		for($i = 0; $i < $viewDistance; ++$i){
+				//si el chunk esta en el radio, sus simetricos en los 4 cuadrantes tambien
 
-			$chunkX = $x + $centerX;
-			$chunkZ = $z + $centerZ;
+				/* cuadrante superior derecho */
+				if(!isset($this->usedChunks[$index = Level::chunkHash($centerX + $x, $centerZ + $z)]) or $this->usedChunks[$index] === false){
+					$newOrder[$index] = true;
+				}
+				unset($lastChunk[$index]);
 
-			if(!isset($this->usedChunks[$index = Level::chunkHash($chunkX, $chunkZ)]) or $this->usedChunks[$index] === false){
-				$newOrder[$index] = true;
-			}
-			unset($lastChunk[$index]);
+				/* cuadrante superior izquierdo */
+				if(!isset($this->usedChunks[$index = Level::chunkHash($centerX - $x - 1, $centerZ + $z)]) or $this->usedChunks[$index] === false){
+					$newOrder[$index] = true;
+				}
+				unset($lastChunk[$index]);
 
-			switch($leg){
-				case 0:
-					++$x;
-					if($x === $layer){
-						++$leg;
+				/* cuadrante inferior derecho */
+				if(!isset($this->usedChunks[$index = Level::chunkHash($centerX + $x, $centerZ - $z - 1)]) or $this->usedChunks[$index] === false){
+					$newOrder[$index] = true;
+				}
+				unset($lastChunk[$index]);
+
+				/* cuadrante inferior izquierdo */
+				if(!isset($this->usedChunks[$index = Level::chunkHash($centerX - $x - 1, $centerZ - $z - 1)]) or $this->usedChunks[$index] === false){
+					$newOrder[$index] = true;
+				}
+				unset($lastChunk[$index]);
+
+				if($x !== $z){
+					/* espejos de los cuadrantes */
+					if(!isset($this->usedChunks[$index = Level::chunkHash($centerX + $z, $centerZ + $x)]) or $this->usedChunks[$index] === false){
+						$newOrder[$index] = true;
 					}
-					break;
-				case 1:
-					++$z;
-					if($z === $layer){
-						++$leg;
+					unset($lastChunk[$index]);
+
+					if(!isset($this->usedChunks[$index = Level::chunkHash($centerX - $z - 1, $centerZ + $x)]) or $this->usedChunks[$index] === false){
+						$newOrder[$index] = true;
 					}
-					break;
-				case 2:
-					--$x;
-					if(-$x === $layer){
-						++$leg;
+					unset($lastChunk[$index]);
+
+					if(!isset($this->usedChunks[$index = Level::chunkHash($centerX + $z, $centerZ - $x - 1)]) or $this->usedChunks[$index] === false){
+						$newOrder[$index] = true;
 					}
-					break;
-				case 3:
-					--$z;
-					if(-$z === $layer){
-						$leg = 0;
-						++$layer;
+					unset($lastChunk[$index]);
+
+					if(!isset($this->usedChunks[$index = Level::chunkHash($centerX - $z - 1, $centerZ - $x - 1)]) or $this->usedChunks[$index] === false){
+						$newOrder[$index] = true;
 					}
-					break;
+					unset($lastChunk[$index]);
+				}
 			}
 		}
 
@@ -1960,7 +1989,9 @@ class Player extends Human implements CommandSender, InventoryHolder, ChunkLoade
 			return;
 		}
 
-		if($this->nextChunkOrderRun-- <= 0 or $this->chunk === null){
+		$emptyQueue = count($this->loadQueue) === 0;
+		if($this->nextChunkOrderRun-- <= 0 or $this->chunk === null or ($emptyQueue and $this->spawned and $this->clientChunkRadius > 0)){
+			//vanilla: cola vacia = radio alrededor del jugador completo -> reordenar para llenarlo
 			$this->orderChunks();
 		}
 
@@ -2256,11 +2287,21 @@ class Player extends Human implements CommandSender, InventoryHolder, ChunkLoade
 				}
 				break;
 			case ProtocolInfo::REQUEST_CHUNK_RADIUS_PACKET:
-				/*if($this->spawned){
-					$this->viewDistance = $packet->radius ** 2;
-				}*/
+				if($this->server->chunkRadius != -1){
+					$newRadius = (int) $this->server->chunkRadius;
+				}elseif($this->spawned and $this->clientChunkRadius > 0){
+					//vanilla: ampliar con el render distance ya negociado del cliente
+					$newRadius = min(32, max($this->clientChunkRadius, (int) $packet->radius));
+				}else{
+					$newRadius = min(32, (int) $packet->radius);
+				}
+				if($newRadius != $this->clientChunkRadius){
+					$this->clientChunkRadius = $newRadius;
+					$this->viewDistance = $newRadius;
+					$this->orderChunks(); //recargar la espiral con el radio nuevo
+				}
 				$pk = new ChunkRadiusUpdatedPacket();
-				$pk->radius = ($this->server->chunkRadius != -1) ? $this->server->chunkRadius : $packet->radius;
+				$pk->radius = $newRadius;
 				$this->dataPacket($pk);
 				break;
 			case ProtocolInfo::PLAYER_INPUT_PACKET:

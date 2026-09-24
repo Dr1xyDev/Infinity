@@ -112,11 +112,13 @@ level-settings:
 
 chunk-sending:
  #Amount of chunks sent to players per tick
- per-tick: 1
+ per-tick: 8
+ #View distance in chunks around each player 
+ view-distance: 8
  #Amount of chunks sent around each player
  max-chunks: 32
  #Amount of chunks that need to be sent before spawning the player
- spawn-threshold: 28
+ spawn-threshold: 80
  #Save a serialized copy of the chunk in memory for faster sending
  #Useful in mostly-static worlds where lots of players join at the same time
  cache-chunks: true
@@ -131,9 +133,9 @@ chunk-ticking:
 
 chunk-generation:
  #Max. amount of chunks in the waiting queue to be generated
- queue-size: 2
+ queue-size: 8
  #Max. amount of chunks in the waiting queue to be populated
- population-queue-size: 2
+ population-queue-size: 8
 
 ticks-per:
  animal-spawns: 400
