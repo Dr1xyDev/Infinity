@@ -112,8 +112,7 @@ level-settings:
 
 chunk-sending:
  #Amount of chunks sent to players per tick
- per-tick: 8
- #View distance in chunks around each player 
+ per-tick: 8 #View distance in chunks around each player (the client may request more, vanilla-style)
  view-distance: 8
  #Amount of chunks sent around each player
  max-chunks: 32

@@ -56,6 +56,9 @@ class Memis{
 	/** @var string|null */
 	private static $libPath = null;
 
+	/** @var string|null ultimo error de carga (para diagnosticar en el boot) */
+	private static $lastError = null;
+
 	private static $CDEF = <<<'CDEF'
 int msi_version(void);
 int msi_sky_light(const unsigned char *blocks, const unsigned char *solid, const int *hm,
@@ -111,17 +114,57 @@ CDEF;
 		}catch(\Throwable $e){
 			self::$ffi = null;
 			self::$enabled = false;
+			self::$lastError = $e->getMessage();
 		}
 	}
 
 	/**
 	 * Carpeta <server>/libs (junto a worlds/, plugins/, etc.). Se crea sola.
 	 *
-	 * @return string ruta con separador final
+	 * @return string ruta absoluta con separador final
 	 */
 	public static function getLibsDirectory(){
-		$base = \defined('pocketmine\\DATA') ? \constant('pocketmine\\DATA') : (\getcwd() . DIRECTORY_SEPARATOR);
-		$dir = \rtrim($base, "/\\") . DIRECTORY_SEPARATOR . "libs" . DIRECTORY_SEPARATOR;
+		// Base del server: la carpeta real donde viven worlds/, plugins/,
+		// server.properties, etc. Se detecta mirando alrededor del proceso:
+		//  - pocketmine\DATA si ya esta definida (ruta usada por el nucleo)
+		//  - PHP_BINARY: php vive en <server>/bin/php7/bin/php -> subir hasta
+		//    la carpeta que contenga worlds/ (asi funciona en Termux/Android
+		//    aunque el cwd sea otro)
+		//  - __DIR__ del nucleo como ultimo recurso
+		$base = null;
+		if(\defined('pocketmine\DATA')){
+			$base = \constant('pocketmine\DATA');
+		}
+		if(($base === null or $base === "" or $base === ".") and \defined('pocketmine\PATH') and \strpos(\constant('pocketmine\PATH'), "phar://") !== 0){
+			$base = \constant('pocketmine\PATH');
+		}
+		if($base === null or $base === "" or $base === "."){
+			$probe = \dirname(\PHP_BINARY);
+			for($i = 0; $i < 6; ++$i){
+				if(\is_dir($probe . DIRECTORY_SEPARATOR . "worlds")){
+					$base = $probe . DIRECTORY_SEPARATOR;
+					break;
+				}
+				$parent = \dirname($probe);
+				if($parent === $probe){
+					break;
+				}
+				$probe = $parent;
+			}
+		}
+		if($base === null or $base === "" or $base === "."){
+			$base = \dirname(\dirname(__DIR__)) . DIRECTORY_SEPARATOR; // <src>/pocketmine -> raiz del nucleo
+		}
+
+		$base = \rtrim((string) $base, "/\\");
+		if($base === "" || $base === "." || ($base[0] !== "/" && $base[1] !== ":")){
+			// Ruta relativa: anclarla al cwd real del proceso
+			// NOTA: && dentro del ternario; and/or tienen precedencia MUY baja
+			// y rompen la asignacion (base acabaria valiendo "1")
+			$cwd = \getcwd();
+			$base = (\is_string($cwd) && $cwd !== "") ? \rtrim($cwd, "/\\") : \dirname(\PHP_BINARY);
+		}
+		$dir = $base . DIRECTORY_SEPARATOR . "libs" . DIRECTORY_SEPARATOR;
 		if(!\is_dir($dir)){
 			@\mkdir($dir, 0777, true);
 		}
@@ -133,14 +176,28 @@ CDEF;
 	 */
 	private static function findLibrary(){
 		$env = \getenv("INFINITY_NATIVE_LIB");
-		if(\is_string($env) and $env !== "" and \is_file($env)){
-			return $env;
+		if(\is_string($env) && $env !== "" && \is_file($env)){
+			return \realpath($env) ?: $env;
 		}
 
-		// Unica ubicacion soportada: <server>/libs/memis.so (colocacion manual)
-		$libs = self::getLibsDirectory() . self::LIBS_FILE_NAME;
+		// Unica ubicacion soportada: <server>/libs/ (colocacion manual)
+		$dir = self::getLibsDirectory();
+
+		// 1) memis.so con el nombre exacto
+		$libs = $dir . self::LIBS_FILE_NAME;
 		if(\is_file($libs)){
-			return $libs;
+			return \realpath($libs) ?: $libs;
+		}
+
+		// 2) aceptar cualquier memis-*.so o *.so que haya dentro de libs/
+		//    (asi no hay que renombrar memis-android-arm64-v8a.so, etc.)
+		foreach(@\scandir($dir) ?: [] as $f){
+			if(\is_string($f) && \substr($f, -3) === ".so"){
+				$full = $dir . $f;
+				if(\is_file($full)){
+					return \realpath($full) ?: $full;
+				}
+			}
 		}
 
 		return null;
@@ -175,7 +232,23 @@ CDEF;
 			}
 			return $version . " (nativo: " . self::$libPath . ")";
 		}
-		return "0 (PHP puro; coloca memis.so en " . self::getLibsDirectory() . self::LIBS_FILE_NAME . ")";
+
+		$libs = self::getLibsDirectory();
+		$soFiles = [];
+		foreach(@\scandir($libs) ?: [] as $f){
+			if(\is_string($f) && \substr($f, -3) === ".so" && \is_file($libs . $f)){
+				$soFiles[] = $f;
+			}
+		}
+		if(\count($soFiles) > 0){
+			// Hay .so en libs/ pero no se pudo cargar ninguno: decir por que
+			$reason = self::$lastError !== null ? " (error: " . \substr(self::$lastError, 0, 140) . ")" : "";
+			return "0 (PHP puro; no se pudo cargar " . $libs . $soFiles[0] . $reason . ")";
+		}
+		if(!\class_exists(\FFI::class)){
+			return "0 (PHP puro; FFI no disponible en este PHP)";
+		}
+		return "0 (PHP puro; coloca memis.so en " . $libs . self::LIBS_FILE_NAME . ")";
 	}
 
 	/**

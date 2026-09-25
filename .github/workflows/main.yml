@@ -31,6 +31,7 @@ jobs:
           cp -r raklib build/src/
           cp -r spl build/src/
           cp -r synapse build/src/
+          cp -r native build/src/
 
       - name: Crear builder
         run: |

@@ -1,0 +1,140 @@
+name: Build memis.so (nativo FFI)
+
+# Workflow 100% MANUAL: se ejecuta solo cuando lo lanzas desde
+# Actions -> Build memis.so -> Run workflow.
+# Los binarios compilados se hacen COMMIT directamente al repo en
+# native/builded/<target>/memis.so (ademas de quedar como artefactos).
+
+on:
+  workflow_dispatch:
+    inputs:
+      targets:
+        description: "Targets a compilar (vacío = los 3: linux-x86_64, linux-arm64-cobalt, android)"
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: memis-build
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux-x86_64
+            mode: host
+            out: memis-linux-x86_64.so
+          - name: linux-arm64-cobalt
+            mode: cross-aarch64
+            out: memis-linux-aarch64.so
+          - name: android
+            mode: android
+            out: memis-android-arm64-v8a.so
+    steps:
+      - name: Clonar repositorio
+        uses: actions/checkout@v4
+        with:
+          # Necesario para poder hacer push del binario compilado
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Filtro por input (si se especifico)
+        if: inputs.targets != ''
+        run: |
+          case ",${{ inputs.targets }}," in
+            *",${{ matrix.name }},"*) echo "Compilando ${{ matrix.name }}";;
+            *) echo "Saltado (no esta en la lista)"; echo "SKIP=1" >> $GITHUB_ENV;;
+          esac
+
+      - name: Instalar toolchain cross aarch64
+        if: env.SKIP != '1' && matrix.mode == 'cross-aarch64'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu
+
+      - name: Descargar Android NDK (r27d)
+        if: env.SKIP != '1' && matrix.mode == 'android'
+        run: |
+          wget -q https://dl.google.com/android/repository/android-ndk-r27d-linux.zip
+          unzip -q android-ndk-r27d-linux.zip
+          echo "ANDROID_NDK_ROOT=$GITHUB_WORKSPACE/android-ndk-r27d" >> $GITHUB_ENV
+
+      - name: Compilar ${{ matrix.name }}
+        if: env.SKIP != '1'
+        run: sh ./native/build.sh ${{ matrix.mode }}
+
+      - name: Nombrar salida
+        if: env.SKIP != '1'
+        run: |
+          mkdir -p native/builded/${{ matrix.name }}
+          mv -f native/lib/${{ matrix.mode == 'host' && 'memis.so' || matrix.mode == 'cross-aarch64' && 'memis-linux-aarch64.so' || 'memis-android-arm64-v8a.so' }} native/builded/${{ matrix.name }}/${{ matrix.out }}
+          file native/builded/${{ matrix.name }}/${{ matrix.out }}
+
+      - name: Verificar simbolos exportados
+        if: env.SKIP != '1'
+        run: |
+          case "${{ matrix.mode }}" in
+            host) nm -D --defined-only native/builded/${{ matrix.name }}/${{ matrix.out }} | grep -q msi_version;;
+            cross-aarch64) aarch64-linux-gnu-nm -D --defined-only native/builded/${{ matrix.name }}/${{ matrix.out }} | grep -q msi_version;;
+            android) ${ANDROID_NDK_ROOT}/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-nm -D --defined-only native/builded/${{ matrix.name }}/${{ matrix.out }} | grep -q msi_version;;
+          esac || (echo "simbolo msi_version no encontrado" && exit 1)
+          echo "Simbolos OK"
+
+      - name: Subir artefacto
+        if: env.SKIP != '1'
+        uses: actions/upload-artifact@v4
+        with:
+          name: memis-${{ matrix.name }}
+          path: native/builded/${{ matrix.name }}/${{ matrix.out }}
+
+      - name: Commit del binario al repo
+        if: env.SKIP != '1'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add native/builded/${{ matrix.name }}/${{ matrix.out }}
+          git rm -f --cached native/builded/${{ matrix.name }}/keepl.md 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "Sin cambios que commitear"
+          else
+            git commit -m "memis.so build: ${{ matrix.name }} (${{ github.run_id }})"
+            git pull --rebase origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }}
+            echo "Binario commiteado al repo"
+          fi
+
+  keep-dir:
+    # Los keepl.md ya no son necesarios: la carpeta vive con el .so commiteado
+    name: Limpiar placeholders
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: always() && !contains(needs.build.result, 'skipped')
+    steps:
+      - name: Clonar repositorio
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Eliminar keepl.md si existen binarios
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin
+          for d in native/builded/*/; do
+            if [ -f "$d/keepl.md" ] && ls "$d"*.so >/dev/null 2>&1; then
+              git rm -f "$d/keepl.md" || true
+            fi
+          done
+          if git diff --cached --quiet; then
+            echo "Nada que limpiar"
+          else
+            git commit -m "limpiar placeholders keepl.md (binarios commiteados)"
+            git push origin HEAD:${{ github.ref_name }} || true
+          fi
