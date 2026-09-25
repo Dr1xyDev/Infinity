@@ -33,6 +33,7 @@ use pocketmine\nbt\tag\IntArrayTag;
 use pocketmine\nbt\tag\LongTag;
 use pocketmine\Player;
 use pocketmine\utils\Binary;
+use pocketmine\utils\Memis;
 use pocketmine\utils\BinaryStream;
 
 class Chunk extends BaseFullChunk{
@@ -246,6 +247,18 @@ class Chunk extends BaseFullChunk{
 
 	public function getBlockLightColumn($x, $z){
 		return substr($this->blockLight, ($x << 10) + ($z << 6), 64);
+	}
+
+	public function getHeightMapArray(){
+		return $this->heightMap;
+	}
+
+	public function packHeightMap(){
+		return Memis::packHeightMap($this->heightMap);
+	}
+
+	public function packBiomeColors(){
+		return Memis::packBiomeColors($this->biomeColors);
 	}
 
 	public function isLightPopulated(){

@@ -35,6 +35,7 @@ use pocketmine\nbt\tag\LongTag;
 use pocketmine\Player;
 use pocketmine\utils\Binary;
 use pocketmine\utils\BinaryStream;
+use pocketmine\utils\Memis;
 
 class Chunk extends BaseChunk{
 
@@ -269,6 +270,61 @@ class Chunk extends BaseChunk{
 		$writer->setData(new CompoundTag("", ["Level" => $nbt]));
 
 		return $writer->write();
+	}
+
+	public function getSectionLightArray($y){
+		return $this->sections[$y]->getLightArray();
+	}
+
+	/**
+	 * Devuelve el skylight packed de una seccion (2048 bytes).
+	 * Con memis.so activo devuelve el buffer real de la seccion anvil
+	 * para que populateSkyLight() pueda reescribirlo nativamente.
+	 */
+	public function getSectionSkyLightArray($y){
+		if(Memis::isEnabled()){
+			try{
+				$prop = new \ReflectionProperty($this->sections[$y], "skyLight");
+				$prop->setAccessible(true);
+				return $prop->getValue($this->sections[$y]);
+			}catch(\ReflectionException $e){
+				// sin reflexion: usar la vista concatenada
+			}
+		}
+		return $this->sections[$y]->getSkyLightArray();
+	}
+
+	public function populateSkyLight(){
+		if(Memis::isEnabled()){
+			// un solo paso nativo sobre los 8 buffers de seccion reales
+			$sky = Memis::populateSkyLightSections($this->getBlockIdArray(), $this->heightMap, [$this, "getSectionSkyLightArray"]);
+			if($sky !== null){				foreach($this->sections as $y => $section){
+					if($section instanceof EmptyChunkSection){
+						// una seccion vacia permanece vacia mientras siga completamente iluminada
+						if($sky[$y] !== str_repeat("\xff", 2048)){
+							return parent::populateSkyLight();
+						}
+						continue;
+					}
+					try{
+						$prop = new \ReflectionProperty($section, "skyLight");
+						$prop->setAccessible(true);
+						$prop->setValue($section, $sky[$y]);
+					}catch(\ReflectionException $e){
+						// sin reflexion: caer a la ruta PHP
+						return parent::populateSkyLight();
+					}
+				}
+				for($z = 0; $z < 16; ++$z){
+					for($x = 0; $x < 16; ++$x){
+						$this->setHeightMap($x, $z, $this->getHighestBlockAt($x, $z, false));
+					}
+				}
+				return;
+			}
+		}
+
+		parent::populateSkyLight();
 	}
 
 	public function toBinary(){

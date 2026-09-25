@@ -26,6 +26,7 @@ namespace pocketmine\level\generator;
 
 use pocketmine\level\ChunkManager;
 use pocketmine\level\generator\noise\Noise;
+use pocketmine\utils\Memis;
 use pocketmine\level\generator\normal\Normal;
 use pocketmine\utils\Random;
 
@@ -128,6 +129,12 @@ abstract class Generator{
 			throw new \InvalidArgumentCountException("zSize % samplingRate must return 0");
 		}
 
+		// ruta nativa memis.so: muestreo + interpolacion bilineal identicos
+		$native = Memis::getFastNoise2D($noise, $xSize, $zSize, $samplingRate, $x, $y, $z);
+		if($native !== null){
+			return $native;
+		}
+
 		$noiseArray = new \SplFixedArray($xSize + 1);
 
 		for($xx = 0; $xx <= $xSize; $xx += $samplingRate){
@@ -190,6 +197,12 @@ abstract class Generator{
 		}
 		if ($ySize % $ySamplingRate !== 0) {
 			throw new \InvalidArgumentCountException("ySize % ySamplingRate must return 0");
+		}
+
+		// ruta nativa memis.so: muestreo + interpolacion trilineal identicos
+		$native = Memis::getFastNoise3D($noise, $xSize, $ySize, $zSize, $xSamplingRate, $ySamplingRate, $zSamplingRate, $x, $y, $z);
+		if($native !== null){
+			return $native;
 		}
 
 		$noiseArray = array_fill(0, $xSize + 1, array_fill(0, $zSize + 1, []));

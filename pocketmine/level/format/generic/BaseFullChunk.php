@@ -30,6 +30,7 @@ use pocketmine\level\Level;
 use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\Player;
 use pocketmine\tile\Tile;
+use pocketmine\utils\Memis;
 
 
 abstract class BaseFullChunk implements FullChunk{
@@ -246,6 +247,15 @@ abstract class BaseFullChunk implements FullChunk{
 	}
 
 	public function recalculateHeightMap(){
+		// ruta nativa memis.so: layout 0 = anvil (secciones), 1 = mcregion/leveldb (flat)
+		$isSectioned = $this instanceof BaseChunk;
+		$blocks = $isSectioned ? $this->getBlockIdArray() : $this->blocks;
+		$native = Memis::recalculateHeightMap($blocks, $isSectioned ? 0 : 1);
+		if($native !== null){
+			$this->heightMap = $native;
+			return;
+		}
+
 		for($z = 0; $z < 16; ++$z){
 			for($x = 0; $x < 16; ++$x){
 				$this->setHeightMap($x, $z, $this->getHighestBlockAt($x, $z, false));
@@ -272,22 +282,68 @@ abstract class BaseFullChunk implements FullChunk{
 	}
 
 	public function populateSkyLight(){
-		for($z = 0; $z < 16; ++$z){
-			for($x = 0; $x < 16; ++$x){
-				$top = $this->getHeightMap($x, $z);
-				for($y = 127; $y > $top; --$y){
-					$this->setBlockSkyLight($x, $y, $z, 15);
+		if($this instanceof BaseChunk){
+			// ruta nativa memis.so: un solo paso para las 8 secciones (layout anvil)
+			$sky = Memis::populateSkyLight($this->getBlockIdArray(), $this->getBlockSkyLightArray(), $this->heightMap, 0);
+			if($sky !== null){
+				$this->skyLight = $sky;
+				for($z = 0; $z < 16; ++$z){
+					for($x = 0; $x < 16; ++$x){
+						$this->setHeightMap($x, $z, $this->getHighestBlockAt($x, $z, false));
+					}
 				}
+				return;
+			}
 
-				for($y = $top; $y >= 0; --$y){
-					if(Block::$solid[$this->getBlockId($x, $y, $z)]){
-						break;
+			// fallback PHP (fallback interno de EmptyChunkSection = chunks nuevos)
+			for($z = 0; $z < 16; ++$z){
+				for($x = 0; $x < 16; ++$x){
+					$top = $this->getHeightMap($x, $z);
+					for($y = 127; $y > $top; --$y){
+						$this->setBlockSkyLight($x, $y, $z, 15);
 					}
 
-					$this->setBlockSkyLight($x, $y, $z, 15);
-				}
+					for($y = $top; $y >= 0; --$y){
+						if(Block::$solid[$this->getBlockId($x, $y, $z)]){
+							break;
+						}
 
-				$this->setHeightMap($x, $z, $this->getHighestBlockAt($x, $z, false));
+						$this->setBlockSkyLight($x, $y, $z, 15);
+					}
+
+					$this->setHeightMap($x, $z, $this->getHighestBlockAt($x, $z, false));
+				}
+			}
+		}else{
+			// ruta nativa memis.so: un solo paso para todo el chunk (layout mcregion/leveldb)
+			$sky = Memis::populateSkyLight($this->blocks, $this->skyLight, $this->heightMap, 1);
+			if($sky !== null){
+				$this->skyLight = $sky;
+				for($z = 0; $z < 16; ++$z){
+					for($x = 0; $x < 16; ++$x){
+						$this->setHeightMap($x, $z, $this->getHighestBlockAt($x, $z, false));
+					}
+				}
+				return;
+			}
+
+			for($z = 0; $z < 16; ++$z){
+				for($x = 0; $x < 16; ++$x){
+					$top = $this->getHeightMap($x, $z);
+					for($y = 127; $y > $top; --$y){
+						$this->setBlockSkyLight($x, $y, $z, 15);
+					}
+
+					for($y = $top; $y >= 0; --$y){
+						if(Block::$solid[$this->getBlockId($x, $y, $z)]){
+							break;
+						}
+
+						$this->setBlockSkyLight($x, $y, $z, 15);
+					}
+
+					$this->setHeightMap($x, $z, $this->getHighestBlockAt($x, $z, false));
+				}
 			}
 		}
 	}

@@ -162,6 +162,7 @@ use pocketmine\utils\Color;
 use pocketmine\utils\Config;
 use pocketmine\utils\LevelException;
 use pocketmine\utils\MainLogger;
+use pocketmine\utils\Memis;
 use pocketmine\utils\ServerException;
 use pocketmine\utils\Terminal;
 use pocketmine\utils\TextFormat;
@@ -1719,6 +1720,7 @@ class Server{
 			$this->about();
 
 			$this->logger->info("Loading properties and configuration...");
+			$this->logger->info("Memis native acceleration: " . Memis::getStatus());
 			if(!file_exists($this->dataPath . "pocketmine.yml")){
 				$content = file_get_contents($this->filePath . "src/pocketmine/resources/pocketmine.yml");
 				@file_put_contents($this->dataPath . "pocketmine.yml", $content);

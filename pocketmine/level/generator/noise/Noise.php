@@ -94,6 +94,30 @@ abstract class Noise{
 
 	abstract public function getNoise3D($x, $y, $z);
 
+	public function getOctaves(){
+		return $this->octaves;
+	}
+
+	public function getPersistence(){
+		return $this->persistence;
+	}
+
+	public function getExpansion(){
+		return $this->expansion;
+	}
+
+	public function getOffsetX(){
+		return $this->offsetX;
+	}
+
+	public function getOffsetY(){
+		return $this->offsetY;
+	}
+
+	public function getOffsetZ(){
+		return $this->offsetZ;
+	}
+
 	public function noise2D($x, $z, $normalized = false){
 		$result = 0;
 		$amp = 1;
