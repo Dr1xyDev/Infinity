@@ -36,6 +36,9 @@ use pocketmine\utils\ChunkException;
 
 class Anvil extends McRegion{
 
+	/** @var \ReflectionProperty|null */
+	public static $sectionBlocksProp = null;
+
 	/** @var RegionLoader[] */
 	protected $regions = [];
 

@@ -6,6 +6,7 @@
  *  - msi_sky_light / msi_sky_light_sections : skylight de chunks (relleno vertical)
  *  - msi_heightmap                          : recalculateHeightMap (anvil y flat)
  *  - msi_fast_noise3d / msi_fast_noise2d    : Generator::getFastNoise3D/2D
+ *  - msi_generate_normal                    : relleno de terreno de Normal
  *  - msi_pack_nibbles / msi_unpack_nibbles  : empaquetado de nibbles
  *  - msi_pack_heightmap / msi_pack_biomecolors : serializacion de chunks
  *
@@ -21,9 +22,10 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <stdlib.h>
 #include <string.h>
 
-#define MEMIS_API_VERSION 2
+#define MEMIS_API_VERSION 3
 
 /* ------------------------------------------------------------------ */
 /* Tabla de gradiente (Simplex::$grad3)                                */
@@ -290,14 +292,13 @@ int msi_heightmap(const unsigned char *blocks, unsigned char *out, int layout){
 /* FastNoise 3D/2D con muestreo + interpolacion                        */
 /* ------------------------------------------------------------------ */
 
-int msi_fast_noise3d(const int *perm,
-                     int octaves, double persistence, double expansion,
-                     double offx, double offy, double offz,
-                     int xs, int ys, int zs, int rx, int ry, int rz,
-                     int x, int y, int z, double *out){
-	if(xs < 1 || ys < 1 || zs < 1 || rx < 1 || ry < 1 || rz < 1){
-		return 1;
-	}
+/* Campo de ruido 3D compartido: muestreo reticular + interpolacion
+ * trilineal (identico a Generator::getFastNoise3D). Args ya validados. */
+static void msi_noise_field3d(const int *perm,
+                              int octaves, double persistence, double expansion,
+                              double offx, double offy, double offz,
+                              int xs, int ys, int zs, int rx, int ry, int rz,
+                              int x, int y, int z, double *out){
 	int xspan = xs + 1, zspan = zs + 1, yspan = ys + 1;
 
 	/* muestreo en la reticula, orden [xx][zz][yy], normalizado (true) */
@@ -350,6 +351,18 @@ int msi_fast_noise3d(const int *perm,
 			}
 		}
 	}
+}
+
+int msi_fast_noise3d(const int *perm,
+                     int octaves, double persistence, double expansion,
+                     double offx, double offy, double offz,
+                     int xs, int ys, int zs, int rx, int ry, int rz,
+                     int x, int y, int z, double *out){
+	if(xs < 1 || ys < 1 || zs < 1 || rx < 1 || ry < 1 || rz < 1){
+		return 1;
+	}
+	msi_noise_field3d(perm, octaves, persistence, expansion, offx, offy, offz,
+		xs, ys, zs, rx, ry, rz, x, y, z, out);
 	return 0;
 }
 
@@ -396,6 +409,71 @@ int msi_fast_noise2d(const int *perm,
 			}
 		}
 	}
+	return 0;
+}
+
+/* ------------------------------------------------------------------ */
+/* Generador Normal (relleno de terreno)                               */
+/* ------------------------------------------------------------------ */
+
+/* Reproduce el bucle de bloques de Normal::generateChunk: bedrock en y=0,
+ * piedra donde ruido+ajuste > 0 y agua estancada bajo el nivel del mar.
+ * minSum/maxSum (256) ya vienen suavizados desde PHP, indexados (z<<4)+x.
+ * out debe ser un buffer de 32768 bytes; las celdas no escritas quedan 0. */
+int msi_generate_normal(const int *perm,
+                        int octaves, double persistence, double expansion,
+                        double offx, double offy, double offz,
+                        int chunkX, int chunkZ,
+                        const double *minSum, const double *maxSum,
+                        int waterHeight, int layout,
+                        unsigned char *out){
+	if(layout != 0 && layout != 1){
+		return 1;
+	}
+	const int xs = 16, ys = 128, zs = 16;
+	const int zspan = zs + 1, yspan = ys + 1;
+
+	double *field = (double *) malloc(sizeof(double) * (xs + 1) * zspan * yspan);
+	if(field == NULL){
+		return 2;
+	}
+	msi_noise_field3d(perm, octaves, persistence, expansion, offx, offy, offz,
+		xs, ys, zs, 4, 8, 4, chunkX * 16, 0, chunkZ * 16, field);
+
+	memset(out, 0, 32768);
+
+	for(int x = 0; x < 16; ++x){
+		for(int z = 0; z < 16; ++z){
+			double mn = minSum[(z << 4) + x];
+			double mx = maxSum[(z << 4) + x];
+			const double *col = field + (x * zspan + z) * yspan;
+			double caveLevel = mn - 10.0;
+			int solidLand = 0;
+
+			for(int y = 127; y >= 1; --y){
+				double na = 2.0 * ((mx - (double) y) / (mx - mn)) - 1.0;
+				double d = (double) y - caveLevel;
+				if(d < 0.0){
+					d = 0.0;
+				}
+				double cap = 0.4 + d / 10.0;
+				if(na > cap){
+					na = cap;
+				}
+				double nv = col[y] + na;
+				if(nv > 0.0){
+					out[layout == 0 ? msi_anvil_idx(x, y, z) : msi_flat_idx(x, y, z)] = 1; /* piedra */
+					solidLand = 1;
+				}else if(y <= waterHeight && solidLand == 0){
+					out[layout == 0 ? msi_anvil_idx(x, y, z) : msi_flat_idx(x, y, z)] = 9; /* agua */
+				}
+			}
+
+			out[layout == 0 ? msi_anvil_idx(x, 0, z) : msi_flat_idx(x, 0, z)] = 7; /* bedrock */
+		}
+	}
+
+	free(field);
 	return 0;
 }
 

@@ -38,6 +38,9 @@ use pocketmine\utils\ChunkException;
 
 class McRegion extends BaseLevelProvider{
 
+	/** @var \ReflectionProperty|null */
+	public static $chunkBlocksProp = null;
+
 	/** @var RegionLoader[] */
 	protected $regions = [];
 

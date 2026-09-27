@@ -30,6 +30,9 @@ use pocketmine\utils\Random;
 
 class GroundCover extends Populator{
 
+	/** @var bool[] */
+	private static $transparencyCache = [];
+
 	public function populate(ChunkManager $level, $chunkX, $chunkZ, Random $random){
 		$chunk = $level->getChunk($chunkX, $chunkZ);
 		if($level instanceof Level or $level instanceof SimpleChunkManager){
@@ -47,7 +50,13 @@ class GroundCover extends Populator{
 
 					$column = $chunk->getBlockIdColumn($x, $z);
 					for($y = 127; $y > 0; --$y){
-						if($column[$y] !== "\x00" and !Block::get(ord($column[$y]))->isTransparent()){
+						$id = ord($column[$y]);
+						if($id !== 0){
+							$transp = self::$transparencyCache[$id] ?? (self::$transparencyCache[$id] = Block::get($id)->isTransparent());
+						}else{
+							$transp = true;
+						}
+						if(!$transp){
 							break;
 						}
 					}

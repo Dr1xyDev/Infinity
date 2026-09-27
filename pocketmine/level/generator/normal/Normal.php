@@ -37,6 +37,7 @@ use pocketmine\block\LapisOre;
 use pocketmine\block\RedstoneOre;
 use pocketmine\block\Stone;
 use pocketmine\level\ChunkManager;
+use pocketmine\level\format\generic\BaseChunk;
 use pocketmine\level\generator\biome\Biome;
 use pocketmine\level\generator\biome\BiomeSelector;
 use pocketmine\level\generator\Generator;
@@ -48,6 +49,7 @@ use pocketmine\level\generator\populator\Ore;
 use pocketmine\level\generator\populator\Populator;
 use pocketmine\level\Level;
 use pocketmine\math\Vector3 as Vector3;
+use pocketmine\utils\Memis;
 use pocketmine\utils\Random;
 
 class Normal extends Generator{
@@ -72,6 +74,11 @@ class Normal extends Generator{
 
 	private static $GAUSSIAN_KERNEL = null;
 	private static $SMOOTH_SIZE = 2;
+
+	/** @var \ReflectionProperty|null */
+	private static $sectionBlocksProp = null;
+	/** @var \ReflectionProperty|null */
+	private static $flatBlocksProp = null;
 
 	public function __construct(array $options = []){
 		if(self::$GAUSSIAN_KERNEL === null){
@@ -208,11 +215,17 @@ class Normal extends Generator{
 	public function generateChunk($chunkX, $chunkZ){
 		$this->random->setSeed(0xdeadbeef ^ ($chunkX << 8) ^ $chunkZ ^ $this->level->getSeed());
 
-		$noise = Generator::getFastNoise3D($this->noiseBase, 16, 128, 16, 4, 8, 4, $chunkX * 16, 0, $chunkZ * 16);
-
 		$chunk = $this->level->getChunk($chunkX, $chunkZ);
 
-		$biomeCache = [];
+		$region = [];
+		for($sx = -self::$SMOOTH_SIZE; $sx <= 16 + self::$SMOOTH_SIZE; ++$sx){
+			for($sz = -self::$SMOOTH_SIZE; $sz <= 16 + self::$SMOOTH_SIZE; ++$sz){
+				$region[($sx + self::$SMOOTH_SIZE) * 20 + ($sz + self::$SMOOTH_SIZE)] = $this->pickBiome($chunkX * 16 + $sx, $chunkZ * 16 + $sz);
+			}
+		}
+
+		$minSumCol = [];
+		$maxSumCol = [];
 
 		for($x = 0; $x < 16; ++$x){
 			for($z = 0; $z < 16; ++$z){
@@ -220,7 +233,7 @@ class Normal extends Generator{
 				$maxSum = 0;
 				$weightSum = 0;
 
-				$biome = $this->pickBiome($chunkX * 16 + $x, $chunkZ * 16 + $z);
+				$biome = $region[($x + self::$SMOOTH_SIZE) * 20 + ($z + self::$SMOOTH_SIZE)];
 				$chunk->setBiomeId($x, $z, $biome->getId());
 				$color = [0, 0, 0];
 
@@ -232,12 +245,7 @@ class Normal extends Generator{
 						if($sx === 0 and $sz === 0){
 							$adjacent = $biome;
 						}else{
-							$index = Level::chunkHash($chunkX * 16 + $x + $sx, $chunkZ * 16 + $z + $sz);
-							if(isset($biomeCache[$index])){
-								$adjacent = $biomeCache[$index];
-							}else{
-								$biomeCache[$index] = $adjacent = $this->pickBiome($chunkX * 16 + $x + $sx, $chunkZ * 16 + $z + $sz);
-							}
+							$adjacent = $region[($x + $sx + self::$SMOOTH_SIZE) * 20 + ($z + $sz + self::$SMOOTH_SIZE)];
 						}
 
 						$minSum += ($adjacent->getMinElevation() - 1) * $weight;
@@ -255,6 +263,56 @@ class Normal extends Generator{
 				$maxSum /= $weightSum;
 
 				$chunk->setBiomeColor($x, $z, sqrt($color[0] / $weightSum), sqrt($color[1] / $weightSum), sqrt($color[2] / $weightSum));
+
+				$minSumCol[($z << 4) + $x] = $minSum;
+				$maxSumCol[($z << 4) + $x] = $maxSum;
+			}
+		}
+
+		if(Memis::isEnabled()){
+			$layout = $chunk instanceof BaseChunk ? 0 : 1;
+			$native = Memis::generateNormal($this->noiseBase, $chunkX, $chunkZ, $minSumCol, $maxSumCol, $this->waterHeight, $layout);
+			if($native !== null){
+				if($layout === 0){
+					$providerClass = $chunk->getProvider();
+					if($providerClass === null){
+						$native = null;
+					}else{
+						$providerClass = ($providerClass instanceof \pocketmine\level\format\LevelProvider) ? \get_class($providerClass) : $providerClass;
+						for($sy = 0; $sy < 8 and $native !== null; ++$sy){
+							$section = $providerClass::createChunkSection($sy);
+							try{
+								$prop = self::$sectionBlocksProp ?? (self::$sectionBlocksProp = new \ReflectionProperty($section, "blocks"));
+								$prop->setAccessible(true);
+								$prop->setValue($section, substr($native, $sy * 4096, 4096));
+							}catch(\ReflectionException $e){
+								$native = null;
+								break;
+							}
+							$chunk->setSection($sy, $section);
+						}
+					}
+				}else{
+					try{
+						$prop = self::$flatBlocksProp ?? (self::$flatBlocksProp = new \ReflectionProperty(\get_class($chunk), "blocks"));
+						$prop->setAccessible(true);
+						$prop->setValue($chunk, $native);
+					}catch(\ReflectionException $e){
+						$native = null;
+					}
+				}
+				if($native !== null){
+					return;
+				}
+			}
+		}
+
+		$noise = Generator::getFastNoise3D($this->noiseBase, 16, 128, 16, 4, 8, 4, $chunkX * 16, 0, $chunkZ * 16);
+
+		for($x = 0; $x < 16; ++$x){
+			for($z = 0; $z < 16; ++$z){
+				$minSum = $minSumCol[($z << 4) + $x];
+				$maxSum = $maxSumCol[($z << 4) + $x];
 
 				$solidLand = false;
 				for($y = 127; $y >= 0; --$y){

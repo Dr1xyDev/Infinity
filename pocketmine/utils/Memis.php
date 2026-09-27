@@ -39,7 +39,7 @@ namespace pocketmine\utils;
 class Memis{
 
 	/** Version minima de API que exige el nucleo */
-	const MIN_API_VERSION = 2;
+	const MIN_API_VERSION = 3;
 
 	/** Nombre del archivo de la libreria dentro de <server>/libs */
 	const LIBS_FILE_NAME = "memis.so";
@@ -76,6 +76,12 @@ int msi_fast_noise2d(const int *perm,
                      double offx, double offy, double offz,
                      int xs, int zs, int rate,
                      int x, int y, int z, double *out);
+int msi_generate_normal(const int *perm,
+                        int octaves, double persistence, double expansion,
+                        double offx, double offy, double offz,
+                        int chunkX, int chunkZ,
+                        const double *minSum, const double *maxSum,
+                        int waterHeight, int layout, unsigned char *out);
 int msi_pack_nibbles(const unsigned char *in, size_t len, unsigned char *out);
 int msi_unpack_nibbles(const unsigned char *in, size_t len, unsigned char *out);
 int msi_pack_heightmap(const int64_t *hm, unsigned char *out);
@@ -606,6 +612,59 @@ CDEF;
 					$result[$xx] = $rowZ;
 				}
 				return $result;
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * Relleno de terreno de Normal::generateChunk en un solo paso nativo.
+	 * Devuelve null si se usa la ruta PHP.
+	 *
+	 * @param \pocketmine\level\generator\noise\Noise $noise
+	 * @param int                                     $chunkX
+	 * @param int                                     $chunkZ
+	 * @param float[]                                 $minSum 256 valores (indice (z << 4) + x)
+	 * @param float[]                                 $maxSum 256 valores (indice (z << 4) + x)
+	 * @param int                                     $waterHeight
+	 * @param int                                     $layout 0 = anvil, 1 = mcregion/leveldb
+	 *
+	 * @return string|null 32768 bytes (layout del chunk) o null
+	 */
+	public static function generateNormal($noise, $chunkX, $chunkZ, array $minSum, array $maxSum, $waterHeight, $layout){
+		self::init();
+		if(self::$enabled and \count($minSum) === 256 and \count($maxSum) === 256 and ($layout === 0 or $layout === 1)){
+			$perm = self::getPermTable($noise);
+			if($perm === null){
+				return null;
+			}
+			$mn = self::$ffi->new("double[256]");
+			$mx = self::$ffi->new("double[256]");
+			$ok = true;
+			for($i = 0; $i < 256; ++$i){
+				$a = $minSum[$i];
+				$b = $maxSum[$i];
+				if(\is_int($a)) $a = (float) $a;
+				if(\is_int($b)) $b = (float) $b;
+				if(!\is_float($a) or !\is_float($b) or !\is_finite($a) or !\is_finite($b) or $a === $b){
+					$ok = false;
+					break;
+				}
+				$mn[$i] = $a;
+				$mx[$i] = $b;
+			}
+			if($ok){
+				$out = self::$ffi->new("unsigned char[32768]");
+				$rc = (int) self::$ffi->msi_generate_normal(
+					$perm,
+					(int) $noise->getOctaves(), (double) $noise->getPersistence(), (double) $noise->getExpansion(),
+					(double) $noise->getOffsetX(), (double) $noise->getOffsetY(), (double) $noise->getOffsetZ(),
+					(int) $chunkX, (int) $chunkZ, $mn, $mx, (int) $waterHeight, $layout, $out
+				);
+				if($rc === 0){
+					return \FFI::string($out, 32768);
+				}
 			}
 		}
 

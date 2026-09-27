@@ -25,6 +25,10 @@ int msi_fast_noise3d(const int *perm, int octaves, double persistence, double ex
 int msi_fast_noise2d(const int *perm, int octaves, double persistence, double expansion,
                      double offx, double offy, double offz, int xs, int zs, int rate,
                      int x, int y, int z, double *out);
+int msi_generate_normal(const int *perm, int octaves, double persistence, double expansion,
+                        double offx, double offy, double offz, int chunkX, int chunkZ,
+                        const double *minSum, const double *maxSum, int waterHeight, int layout,
+                        unsigned char *out);
 int msi_pack_nibbles(const unsigned char *in, size_t len, unsigned char *out);
 int msi_unpack_nibbles(const unsigned char *in, size_t len, unsigned char *out);
 int msi_pack_heightmap(const int64_t *hm, unsigned char *out);
@@ -43,8 +47,8 @@ if(!is_file($path)){
 $ffi = \FFI::cdef($cdef, $path);
 $v = (int) $ffi->msi_version();
 echo "memis.so: $path (API $v)\n";
-if($v < 2){
-	fwrite(STDERR, "API vieja, se requiere >= 2\n");
+if($v < 3){
+	fwrite(STDERR, "API vieja, se requiere >= 3\n");
 	exit(1);
 }
 
@@ -465,6 +469,96 @@ foreach([[16, 16, 4], [16, 16, 8]] as $t){
 		}
 	}
 	check("fastNoise2D rate=$rate (bits exactos)", $phpStr, $natStr);
+}
+
+/* --- 4b. generador Normal (ambos layouts) ----------------------------- */
+
+echo "Test: generate_normal\n";
+
+/** Relleno exacto de Normal::generateChunk (referencia PHP) */
+function php_normal_fill($permArr, $ox, $oy, $oz, $oct, $pers, $exp, $cx, $cz, $mn, $mx, $water, $layout){
+	$noise = new PhpSimplex($permArr, $ox, $oy, $oz);
+	$xs = 16; $ys = 128; $zs = 16; $rx = 4; $ry = 8; $rz = 4;
+	$grid = [];
+	for($xx = 0; $xx <= $xs; $xx += $rx){
+		for($zz = 0; $zz <= $zs; $zz += $rz){
+			for($yy = 0; $yy <= $ys; $yy += $ry){
+				$grid[$xx][$zz][$yy] = php_octave_noise($noise, $oct, $pers, $exp, $ox, $oy, $oz, $cx * 16 + $xx, $yy, $cz * 16 + $zz, true);
+			}
+		}
+	}
+	$field = [];
+	for($xx = 0; $xx < $xs; ++$xx){
+		for($zz = 0; $zz < $zs; ++$zz){
+			for($yy = 0; $yy < $ys; ++$yy){
+				if($xx % $rx !== 0 or $zz % $rz !== 0 or $yy % $ry !== 0){
+					$nx = (int) ($xx / $rx) * $rx;
+					$ny = (int) ($yy / $ry) * $ry;
+					$nz = (int) ($zz / $rz) * $rz;
+					$nnx = $nx + $rx; $nny = $ny + $ry; $nnz = $nz + $rz;
+					$dx1 = (($nnx - $xx) / ($nnx - $nx));
+					$dx2 = (($xx - $nx) / ($nnx - $nx));
+					$dy1 = (($nny - $yy) / ($nny - $ny));
+					$dy2 = (($yy - $ny) / ($nny - $ny));
+					$field[$xx][$zz][$yy] = (($nnz - $zz) / ($nnz - $nz)) * (
+							$dy1 * ($dx1 * $grid[$nx][$nz][$ny] + $dx2 * $grid[$nnx][$nz][$ny])
+							+ $dy2 * ($dx1 * $grid[$nx][$nz][$nny] + $dx2 * $grid[$nnx][$nz][$nny])
+						) + (($zz - $nz) / ($nnz - $nz)) * (
+							$dy1 * ($dx1 * $grid[$nx][$nnz][$ny] + $dx2 * $grid[$nnx][$nnz][$ny])
+							+ $dy2 * ($dx1 * $grid[$nx][$nnz][$nny] + $dx2 * $grid[$nnx][$nnz][$nny])
+						);
+				}else{
+					$field[$xx][$zz][$yy] = $grid[$xx][$zz][$yy];
+				}
+			}
+		}
+	}
+
+	$b = str_repeat("\x00", 32768);
+	$idx = $layout === 0 ? "php_anvil_idx" : "php_flat_idx";
+	for($x = 0; $x < 16; ++$x){
+		for($z = 0; $z < 16; ++$z){
+			$minSum = $mn[($z << 4) + $x];
+			$maxSum = $mx[($z << 4) + $x];
+			$caveLevel = $minSum - 10;
+			$solidLand = false;
+			for($y = 127; $y >= 0; --$y){
+				if($y === 0){
+					$b[$idx($x, 0, $z)] = "\x07";
+					continue;
+				}
+				$na = 2 * (($maxSum - $y) / ($maxSum - $minSum)) - 1;
+				$d = max(0, $y - $caveLevel);
+				$na = min($na, 0.4 + ($d / 10));
+				$nv = $field[$x][$z][$y] + $na;
+				if($nv > 0){
+					$b[$idx($x, $y, $z)] = "\x01";
+					$solidLand = true;
+				}elseif($y <= $water and !$solidLand){
+					$b[$idx($x, $y, $z)] = "\x09";
+				}
+			}
+		}
+	}
+	return $b;
+}
+
+$mnArr = []; $mxArr = [];
+for($i = 0; $i < 256; ++$i){
+	$mnArr[$i] = 50 + (mt_rand() / mt_getrandmax()) * 30;
+	$mxArr[$i] = $mnArr[$i] + 8 + (mt_rand() / mt_getrandmax()) * 40;
+}
+$mnBuf = $ffi->new("double[256]"); $mxBuf = $ffi->new("double[256]");
+foreach($mnArr as $i => $v){ $mnBuf[$i] = $v; }
+foreach($mxArr as $i => $v){ $mxBuf[$i] = $v; }
+$cx2 = mt_rand(-50, 50); $cz2 = mt_rand(-50, 50);
+$genOut = $ffi->new("unsigned char[32768]");
+foreach([0, 1] as $layout){
+	$rc = (int) $ffi->msi_generate_normal($perm, 4, 0.25, 0.03125, $ox, $oy, $oz, $cx2, $cz2, $mnBuf, $mxBuf, 62, $layout, $genOut);
+	if($rc !== 0){ echo "FAIL  generate_normal layout=$layout rc=$rc\n"; ++$fail; continue; }
+	$natStr = \FFI::string($genOut, 32768);
+	$phpStr = php_normal_fill($permArr, $ox, $oy, $oz, 4, 0.25, 0.03125, $cx2, $cz2, $mnArr, $mxArr, 62, $layout);
+	check("generate_normal layout=$layout", $phpStr, $natStr);
 }
 
 /* --- 5. empaquetado -------------------------------------------------- */
