@@ -300,10 +300,14 @@ class Normal extends Generator{
 					}catch(\ReflectionException $e){
 						$native = null;
 					}
-				}
-				if($native !== null){
-					return;
-				}
+				}					if($native !== null){
+						// la ruta nativa rellena solo terreno: los populators de generacion (ground cover: cesped)
+						// deben correr igual que en la ruta PHP
+						foreach($this->generationPopulators as $populator){
+							$populator->populate($this->level, $chunkX, $chunkZ, $this->random);
+						}
+						return;
+					}
 			}
 		}
 

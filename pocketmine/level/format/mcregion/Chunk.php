@@ -349,9 +349,9 @@ class Chunk extends BaseFullChunk{
 			$chunk->blockLight = substr($data, $offset, 16384);
 			$offset += 16384;
 
-			$chunk->heightMap = array_values(unpack("C*", substr($data, $offset, 256)));
+			$chunk->heightMap = Memis::unpackHeightMap(substr($data, $offset, 256)) ?? array_values(unpack("C*", substr($data, $offset, 256)));
 			$offset += 256;
-			$chunk->biomeColors = array_values(unpack("N*", substr($data, $offset, 1024)));
+			$chunk->biomeColors = Memis::unpackBiomeColors(substr($data, $offset, 1024)) ?? array_values(unpack("N*", substr($data, $offset, 1024)));
 			$offset += 1024;
 
 			$flags = ord($data[$offset++]);

@@ -49,15 +49,23 @@ class Chunk extends BaseFullChunk{
 		$blockLight = substr($terrain, $offset, 16384);
 		$offset += 16384;
 
-		$heightMap = [];
-		foreach(unpack("C*", substr($terrain, $offset, 256)) as $c){
-			$heightMap[] = $c;
+		$hmRaw = substr($terrain, $offset, 256);
+		$heightMap = Memis::unpackHeightMap($hmRaw);
+		if($heightMap === null){
+			$heightMap = [];
+			foreach(unpack("C*", $hmRaw) as $c){
+				$heightMap[] = $c;
+			}
 		}
 		$offset += 256;
 
-		$biomeColors = [];
-		foreach(unpack("N*", substr($terrain, $offset, 1024)) as $c){
-			$biomeColors[] = $c;
+		$bcRaw = substr($terrain, $offset, 1024);
+		$biomeColors = Memis::unpackBiomeColors($bcRaw);
+		if($biomeColors === null){
+			$biomeColors = [];
+			foreach(unpack("N*", $bcRaw) as $c){
+				$biomeColors[] = $c;
+			}
 		}
 		$offset += 1024;
 

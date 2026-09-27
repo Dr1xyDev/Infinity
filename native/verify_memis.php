@@ -32,7 +32,9 @@ int msi_generate_normal(const int *perm, int octaves, double persistence, double
 int msi_pack_nibbles(const unsigned char *in, size_t len, unsigned char *out);
 int msi_unpack_nibbles(const unsigned char *in, size_t len, unsigned char *out);
 int msi_pack_heightmap(const int64_t *hm, unsigned char *out);
+int msi_unpack_heightmap(const unsigned char *hm, int *out);
 int msi_pack_biomecolors(const int *colors, unsigned char *out);
+int msi_unpack_biomecolors(const unsigned char *colors, int64_t *out);
 CDEF;
 
 $path = getenv("INFINITY_NATIVE_LIB");
@@ -47,8 +49,8 @@ if(!is_file($path)){
 $ffi = \FFI::cdef($cdef, $path);
 $v = (int) $ffi->msi_version();
 echo "memis.so: $path (API $v)\n";
-if($v < 3){
-	fwrite(STDERR, "API vieja, se requiere >= 3\n");
+if($v < 4){
+	fwrite(STDERR, "API vieja, se requiere >= 4\n");
 	exit(1);
 }
 
@@ -600,6 +602,17 @@ $phpPacked = "";
 foreach($hmPhp as $h){ $phpPacked .= chr($h & 0xFF); }
 check("pack_heightmap", $phpPacked, \FFI::string($hmOut, 256));
 
+/* unpack_heightmap: roundtrip + contra unpack("C*") de PHP */
+$hmUn = $ffi->new("int[256]");
+$ffi->msi_unpack_heightmap($hmOut, $hmUn);
+$phpUn = [];
+foreach(unpack("C*", \FFI::string($hmOut, 256)) as $c){ $phpUn[] = $c; }
+$phpUnStr = ""; $natUnStr = "";
+for($i = 0; $i < 256; ++$i){
+	$phpUnStr .= pack("E", $phpUn[$i]);
+	$natUnStr .= pack("E", $hmUn[$i]);
+}
+check("unpack_heightmap", $phpUnStr, $natUnStr);
 $colPhp = [];
 for($i = 0; $i < 256; ++$i){ $colPhp[$i] = mt_rand(0, 0x7FFFFFFF); }
 $colIn = $ffi->new("int[256]");
@@ -609,6 +622,23 @@ $ffi->msi_pack_biomecolors($colIn, $colOut);
 $phpPacked = "";
 foreach($colPhp as $c){ $phpPacked .= pack("N", $c); }
 check("pack_biomecolors", $phpPacked, \FFI::string($colOut, 1024));
+
+/* unpack_biomecolors: contra unpack("N*") de PHP (incluye colores con bit alto) */
+echo "Test: unpack serializacion\n";
+$bcBytes = str_repeat("\x00", 1024);
+for($i = 0; $i < 1024; ++$i){ $bcBytes[$i] = chr(mt_rand(0, 255)); }
+$bcIn = $ffi->new("unsigned char[1024]");
+\FFI::memcpy($bcIn, $bcBytes, 1024);
+$bcOut = $ffi->new("int64_t[256]");
+$ffi->msi_unpack_biomecolors($bcIn, $bcOut);
+$phpUn = [];
+foreach(unpack("N*", $bcBytes) as $c){ $phpUn[] = $c; }
+$phpUnStr = ""; $natUnStr = "";
+for($i = 0; $i < 256; ++$i){
+	$phpUnStr .= pack("E", $phpUn[$i]);
+	$natUnStr .= pack("E", $bcOut[$i]);
+}
+check("unpack_biomecolors (N unsigned)", $phpUnStr, $natUnStr);
 
 /* --- resultado -------------------------------------------------------- */
 

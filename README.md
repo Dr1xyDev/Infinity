@@ -26,13 +26,14 @@ El nucleo acelera sus hot paths CPU mediante `memis.so` (PHP FFI, `pocketmine/ut
 - recálculo de heightmap nativo
 - fastNoise2D/3D (simplex + interpolación) para la generación
 - empaquetado de heightmap, biomeColors y nibbles
+- desempaquetado nativo de heightmap y biomeColors en la carga de chunks (API 4)
 - además, rutas PHP optimizadas: biomas por región (sin cache por columna) y ground cover con caché de transparencia
 
 - **Colocación manual**: el `.so` ya NO viene incluido. Copia tú mismo el binario correcto para tu SO/arquitectura a la carpeta **`libs/`** del servidor (se crea sola al arrancar): `memis.so`, o directamente el binario sin renombrar (`memis-android-arm64-v8a.so`, `memis-linux-aarch64.so`, `memis-linux-x86_64.so`…) — el núcleo acepta cualquier `.so` que haya dentro. Alternativa: `INFINITY_NATIVE_LIB=/ruta/memis.so`. Sin el `.so`, el núcleo arranca en modo PHP puro sin problema.
 - Si el `.so` existe pero no carga, el boot muestra el motivo: `Memis native acceleration: 0 (PHP puro; no se pudo cargar .../libs/xxx.so (error: ...))` (normalmente es que usaste el binario de otra arquitectura/OS).
 - Binarios precompilados: se generan con el workflow **manual** `Build memis.so` (Actions → Run workflow) para `linux-x86_64`, `linux-arm64-cobalt` y `android`, y se hacen **commit** automáticamente al repo en `native/builded/<target>/` (además de quedar como artefactos descargables).
 - Verificación de versión de API y **fallback PHP byte-idéntico** si falta o es incompatible
-- La API actual es la **3**: si tu `memis.so` es más viejo (API 2 o menos), el núcleo arranca en PHP puro; regenera los binarios con el workflow `Build memis.so` y vuelve a copiarlos a `libs/`
+- La API actual es la **4**: si tu `memis.so` es más viejo (API 3), el núcleo igual acelera la generación y el resto de rutas; solo el desempaquetado de chunks cae a `unpack()` de PHP. Para tenerlo todo, regenera los binarios con el workflow `Build memis.so` y vuelve a copiarlos a `libs/`
 - Estado en el boot: `Memis native acceleration: ...`
 - Compilar manualmente: `sh ./native/build.sh` (host) · `cross-aarch64` · `android` (ver workflow `memis-build.yml`, 100% manual)
 - Verificar salida byte-idéntica: `php native/verify_memis.php`

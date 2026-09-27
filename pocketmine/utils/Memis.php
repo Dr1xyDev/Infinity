@@ -47,6 +47,9 @@ class Memis{
 	/** @var \FFI|null */
 	private static $ffi = null;
 
+	/** @var \FFI|null cdef de los unpack de la API 4 (null si el .so es viejo) */
+	private static $ffiUnpack = null;
+
 	/** @var bool */
 	private static $enabled = false;
 
@@ -88,6 +91,16 @@ int msi_pack_heightmap(const int64_t *hm, unsigned char *out);
 int msi_pack_biomecolors(const int *colors, unsigned char *out);
 CDEF;
 
+	/**
+	 * Simbolos de la API 4 (unpack de serializacion): se cargan en un cdef
+	 * aparte para que un memis.so API 3 siga acelerando la generacion y el
+	 * resto de rutas sin romperse; si falta, se usa unpack() de PHP.
+	 */
+	private static $CDEF_UNPACK = <<<'CDEF'
+int msi_unpack_heightmap(const unsigned char *hm, int *out);
+int msi_unpack_biomecolors(const unsigned char *colors, int64_t *out);
+CDEF;
+
 	private function __construct(){
 	}
 
@@ -109,19 +122,27 @@ CDEF;
 			return;
 		}
 
-		try{
-			$ffi = \FFI::cdef(self::$CDEF, $path);
-			if(((int) $ffi->msi_version()) < self::MIN_API_VERSION){
-				return; // libreria vieja: usar PHP
-			}
-			self::$ffi = $ffi;
-			self::$libPath = $path;
-			self::$enabled = true;
-		}catch(\Throwable $e){
-			self::$ffi = null;
-			self::$enabled = false;
-			self::$lastError = $e->getMessage();
+	try{
+		$ffi = \FFI::cdef(self::$CDEF, $path);
+		$version = (int) $ffi->msi_version();
+		if($version < self::MIN_API_VERSION){
+			return; // libreria vieja: usar PHP
 		}
+		self::$ffi = $ffi;
+		self::$libPath = $path;
+		self::$enabled = true;
+		if($version >= 4){
+			try{
+				self::$ffiUnpack = \FFI::cdef(self::$CDEF_UNPACK, $path);
+			}catch(\Throwable $e){
+				self::$ffiUnpack = null;
+			}
+		}
+	}catch(\Throwable $e){
+		self::$ffi = null;
+		self::$enabled = false;
+		self::$lastError = $e->getMessage();
+	}
 	}
 
 	/**
@@ -327,6 +348,56 @@ CDEF;
 			$packed .= \pack("N", $color);
 		}
 		return $packed;
+	}
+
+	/**
+	 * Desempaqueta el heightmap de un chunk: 256 bytes (pack "C*") -> array 256.
+	 *
+	 * @param string $heightMap
+	 *
+	 * @return int[]|null
+	 */
+	public static function unpackHeightMap(string $heightMap){
+		self::init();
+		if(self::$ffiUnpack !== null and \strlen($heightMap) === 256){
+			$in = self::$ffiUnpack->new("unsigned char[256]");
+			\FFI::memcpy($in, $heightMap, 256);
+			$out = self::$ffiUnpack->new("int[256]");
+			if(((int) self::$ffiUnpack->msi_unpack_heightmap($in, $out)) === 0){
+				$hm = [];
+				for($i = 0; $i < 256; ++$i){
+					$hm[$i] = $out[$i];
+				}
+				return $hm;
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * Desempaqueta biomeColors de un chunk: 1024 bytes (pack "N*") -> array 256.
+	 *
+	 * @param string $biomeColors
+	 *
+	 * @return int[]|null
+	 */
+	public static function unpackBiomeColors(string $biomeColors){
+		self::init();
+		if(self::$ffiUnpack !== null and \strlen($biomeColors) === 1024){
+			$in = self::$ffiUnpack->new("unsigned char[1024]");
+			\FFI::memcpy($in, $biomeColors, 1024);
+			$out = self::$ffiUnpack->new("int64_t[256]");
+			if(((int) self::$ffiUnpack->msi_unpack_biomecolors($in, $out)) === 0){
+				$colors = [];
+				for($i = 0; $i < 256; ++$i){
+					$colors[$i] = $out[$i];
+				}
+				return $colors;
+			}
+		}
+
+		return null;
 	}
 
 	/**

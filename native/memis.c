@@ -8,7 +8,7 @@
  *  - msi_fast_noise3d / msi_fast_noise2d    : Generator::getFastNoise3D/2D
  *  - msi_generate_normal                    : relleno de terreno de Normal
  *  - msi_pack_nibbles / msi_unpack_nibbles  : empaquetado de nibbles
- *  - msi_pack_heightmap / msi_pack_biomecolors : serializacion de chunks
+ *  - msi_pack/unpack_heightmap / msi_pack/unpack_biomecolors : serializacion de chunks
  *
  * El ruido usa la implementacion Simplex del nucleo (todos los generadores
  * del nucleo usan pocketmine\level\generator\noise\Simplex).
@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define MEMIS_API_VERSION 3
+#define MEMIS_API_VERSION 4
 
 /* ------------------------------------------------------------------ */
 /* Tabla de gradiente (Simplex::$grad3)                                */
@@ -503,6 +503,14 @@ int msi_pack_heightmap(const int64_t *hm, unsigned char *out){
 	return 0;
 }
 
+/* unpack de heightmap del chunk: 256 bytes "C" -> int[256] */
+int msi_unpack_heightmap(const unsigned char *hm, int *out){
+	for(int i = 0; i < 256; ++i){
+		out[i] = (int) hm[i];
+	}
+	return 0;
+}
+
 int msi_pack_biomecolors(const int *colors, unsigned char *out){
 	for(int i = 0; i < 256; ++i){
 		uint32_t c = (uint32_t) colors[i];
@@ -511,6 +519,16 @@ int msi_pack_biomecolors(const int *colors, unsigned char *out){
 		out[b + 1] = (unsigned char) ((c >> 16) & 0xFF);
 		out[b + 2] = (unsigned char) ((c >> 8) & 0xFF);
 		out[b + 3] = (unsigned char) (c & 0xFF);
+	}
+	return 0;
+}
+
+/* unpack de biomeColors del chunk: 1024 bytes "N" -> int64[256]
+ * sin signo (0..4294967295), identico a unpack("N*") de PHP */
+int msi_unpack_biomecolors(const unsigned char *colors, int64_t *out){
+	for(int i = 0; i < 256; ++i){
+		const unsigned char *c = colors + (i << 2);
+		out[i] = ((int64_t) c[0] << 24) | ((int64_t) c[1] << 16) | ((int64_t) c[2] << 8) | (int64_t) c[3];
 	}
 	return 0;
 }
