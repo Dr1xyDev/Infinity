@@ -25,7 +25,6 @@ use pocketmine\level\generator\vanilla\level\VanillaChunkManager;
 use pocketmine\level\generator\vanilla\block\BlockFactory;
 use pocketmine\level\generator\vanilla\level\generator\dimension\Nether;
 use pocketmine\level\generator\vanilla\level\generator\dimension\Overworld;
-use pocketmine\level\generator\vanilla\level\generator\dimension\TheEnd;
 use pocketmine\level\generator\vanilla\level\generator\Generator as VanillaGeneratorBase;
 use pocketmine\level\generator\vanilla\nbt\tag\CompoundTag;
 use pocketmine\level\generator\vanilla\utils\Random as VanillaRandom;
@@ -36,7 +35,6 @@ class VanillaAdapter extends LegacyGenerator{
 
 	public const TYPE_OVERWORLD = 0;
 	public const TYPE_NETHER = 1;
-	public const TYPE_END = 2;
 
 	/** @var int */
 	private $dimType;
@@ -52,7 +50,6 @@ class VanillaAdapter extends LegacyGenerator{
 		$type = $settings["dimension"] ?? $settings["preset"] ?? "overworld";
 		$this->dimType = match(strtolower((string) $type)){
 			"nether", "hell" => self::TYPE_NETHER,
-			"end", "the_end" => self::TYPE_END,
 			default => self::TYPE_OVERWORLD,
 		};
 	}
@@ -68,7 +65,6 @@ class VanillaAdapter extends LegacyGenerator{
 	public static function fromServerLevelType(string $levelType) : string{
 		return match(strtoupper($levelType)){
 			"NETHER", "HELL" => VanillaAdapterNether::class,
-			"END", "THE_END" => VanillaAdapterEnd::class,
 			default => self::class,
 		};
 	}
@@ -100,7 +96,6 @@ class VanillaAdapter extends LegacyGenerator{
 
 		$implClass = match($this->dimType){
 			self::TYPE_NETHER => Nether::class,
-			self::TYPE_END => TheEnd::class,
 			default => Overworld::class,
 		};
 
@@ -142,7 +137,6 @@ class VanillaAdapter extends LegacyGenerator{
 	public function getName() : string{
 		return "Vanilla" . match($this->dimType){
 			self::TYPE_NETHER => "Nether",
-			self::TYPE_END => "End",
 			default => "Overworld",
 		};
 	}

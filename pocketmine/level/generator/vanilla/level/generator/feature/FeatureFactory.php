@@ -33,7 +33,6 @@ class FeatureFactory {
 	public function __construct(){
 		//TODO: AquaticFeatures
 		CaveFeatures::bootstrap($this);
-		EndFeatures::bootstrap($this);
 		MiscOverworldFeatures::bootstrap($this);
 		//TODO: NetherFeatures
 		OreFeatures::bootstrap($this);

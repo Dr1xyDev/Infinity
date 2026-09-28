@@ -33,7 +33,6 @@ class PlacementFactory {
 
 	public function __construct(){
 		CavePlacements::bootstrap($this);
-		EndPlacements::bootstrap($this);
 		MiscOverworldPlacements::bootstrap($this);
 		OrePlacements::bootstrap($this);
 		VegetationPlacements::bootstrap($this);

@@ -25,7 +25,6 @@ namespace pocketmine\level\generator\vanilla\level\generator;
 use InvalidArgumentException;
 use pocketmine\level\generator\vanilla\level\generator\dimension\Nether;
 use pocketmine\level\generator\vanilla\level\generator\dimension\Overworld;
-use pocketmine\level\generator\vanilla\level\generator\dimension\TheEnd;
 use pocketmine\level\generator\vanilla\utils\Utils;
 use function array_keys;
 use function strtolower;
@@ -48,7 +47,6 @@ final class GeneratorManager
 		self::addGenerator(Overworld::class, "default");
 		self::addGenerator(Nether::class, "hell");
 		self::addGenerator(Nether::class, "nether");
-		self::addGenerator(TheEnd::class, "end");
 		self::addGenerator(VoidGenerator::class, "void");
 	}
 

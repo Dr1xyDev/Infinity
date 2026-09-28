@@ -41,7 +41,6 @@ class BiomeFactory {
 		$this->register(BiomeIds::SWAMPLAND, BiomeMaker::makeGenericSwampBiome(-0.2, 0.1, false));
 		$this->register(BiomeIds::RIVER, BiomeMaker::makeRiverBiome(-0.5, 0.0, 0.5, false));
 		$this->register(BiomeIds::HELL, BiomeMaker::makeHellBiome());
-		$this->register(BiomeIds::SKY, BiomeMaker::makeTheEndBiome());
 		$this->register(BiomeIds::FROZEN_OCEAN, BiomeMaker::makeFrozenOceanBiome());
 		$this->register(BiomeIds::FROZEN_RIVER, BiomeMaker::makeRiverBiome(-0.5, 0.0, 0.0, true));
 		$this->register(BiomeIds::ICE_FLATS, BiomeMaker::makeSnowyBiome(0.125, 0.05, false, false));

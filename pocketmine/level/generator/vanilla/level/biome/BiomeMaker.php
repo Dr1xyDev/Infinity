@@ -23,7 +23,6 @@ declare(strict_types=1);
 namespace pocketmine\level\generator\vanilla\level\biome;
 
 use pocketmine\level\generator\vanilla\level\generator\GenerationStageDecoration;
-use pocketmine\level\generator\vanilla\level\generator\placement\EndPlacements;
 use pocketmine\level\generator\vanilla\level\generator\placement\MiscOverworldPlacements;
 use pocketmine\level\generator\vanilla\level\generator\placement\VegetationPlacements;
 use pocketmine\level\generator\vanilla\level\generator\surfacebuilders\ConfiguredSurfaceBuilderFactory;
@@ -281,27 +280,6 @@ class BiomeMaker {
 			->downfall(0.4)
 			->withGenerationSettings($biomeGenerationSettingsBuilder->build())
 			->build();
-	}
-
-	private static function makeEndBiome(BiomeGenerationSettingsBuilder $biomeGenerationSettingsBuilder) : Biome {
-		return (new BiomeBuilder())
-			->precipitation(RainType::NONE)
-			->category(BiomeCategory::THEEND)
-			->depth(0.1)
-			->scale(0.2)
-			->temperature(0.5)
-			->downfall(0.5)
-			->withGenerationSettings($biomeGenerationSettingsBuilder->build())
-			->build();
-	}
-
-	public static function makeTheEndBiome() : Biome{
-		$biomeGenerationSettingsBuilder = (new BiomeGenerationSettingsBuilder())->withSurfaceBuilder(ConfiguredSurfaceBuilderFactory::getInstance()->get(ConfiguredSurfaceBuilderFactory::END));
-		$biomeGenerationSettingsBuilder->withFeature(GenerationStageDecoration::SURFACE_STRUCTURES, DefaultBiomeFeatures::getFeatureFromName(EndPlacements::END_SPIKE));
-		$biomeGenerationSettingsBuilder->withFeature(GenerationStageDecoration::TOP_LAYER_MODIFICATION, DefaultBiomeFeatures::getFeatureFromName(EndPlacements::END_PLATFORM));
-		$biomeGenerationSettingsBuilder->withFeature(GenerationStageDecoration::VEGETAL_DECORATION, DefaultBiomeFeatures::getFeatureFromName(EndPlacements::CHORUS_PLANT));
-		$biomeGenerationSettingsBuilder->withFeature(GenerationStageDecoration::RAW_GENERATION, DefaultBiomeFeatures::getFeatureFromName(EndPlacements::END_ISLAND_DECORATED));
-		return self::makeEndBiome($biomeGenerationSettingsBuilder);
 	}
 
 	public static function makeMushroomBiome(float $depth, float $scale) : Biome {
