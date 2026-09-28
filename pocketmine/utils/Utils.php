@@ -41,6 +41,18 @@ class Utils{
 	 *
 	 * @return string
 	 */
+
+	/**
+	 * Replacement for the deprecated lcg_value(): random float in [0, 1)
+	 */
+	public static function randomFloat() : float{
+		static $rng = null;
+		if($rng === null){
+			$rng = new \Random\Randomizer();
+		}
+		return $rng->nextFloat();
+	}
+
 	public static function getCallableIdentifier(callable $variable){
 		if(is_array($variable)){
 			return sha1(strtolower(spl_object_hash($variable[0])) . "::" . strtolower($variable[1]));

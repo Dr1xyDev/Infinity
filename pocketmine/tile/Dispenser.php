@@ -237,7 +237,7 @@ class Dispenser extends Spawnable implements InventoryHolder, Container, Nameabl
 							new DoubleTag("", $motion[2])
 						]),
 						"Rotation" => new ListTag("Rotation", [
-							new FloatTag("", lcg_value() * 360),
+							new FloatTag("", Utils::randomFloat() * 360),
 							new FloatTag("", 0)
 						]),
 						"Fire" => new ShortTag("Fire", 0)
@@ -262,7 +262,7 @@ class Dispenser extends Spawnable implements InventoryHolder, Container, Nameabl
 							new DoubleTag("", $motion[2])
 						]),
 						"Rotation" => new ListTag("Rotation", [
-							new FloatTag("", lcg_value() * 360),
+							new FloatTag("", Utils::randomFloat() * 360),
 							new FloatTag("", 0)
 						]),
 					]);
@@ -286,7 +286,7 @@ class Dispenser extends Spawnable implements InventoryHolder, Container, Nameabl
 							new DoubleTag("", $motion[2])
 						]),
 						"Rotation" => new ListTag("Rotation", [
-							new FloatTag("", lcg_value() * 360),
+							new FloatTag("", Utils::randomFloat() * 360),
 							new FloatTag("", 0)
 						]),
 					]);
@@ -310,7 +310,7 @@ class Dispenser extends Spawnable implements InventoryHolder, Container, Nameabl
 							new DoubleTag("", $motion[2])
 						]),
 						"Rotation" => new ListTag("Rotation", [
-							new FloatTag("", lcg_value() * 360),
+							new FloatTag("", Utils::randomFloat() * 360),
 							new FloatTag("", 0)
 						]),
 						"PotionId" => new ShortTag("PotionId", $item->getDamage()),
@@ -335,7 +335,7 @@ class Dispenser extends Spawnable implements InventoryHolder, Container, Nameabl
 							new DoubleTag("", $motion[2])
 						]),
 						"Rotation" => new ListTag("Rotation", [
-							new FloatTag("", lcg_value() * 360),
+							new FloatTag("", Utils::randomFloat() * 360),
 							new FloatTag("", 0)
 						]),
 					]);
@@ -362,7 +362,7 @@ class Dispenser extends Spawnable implements InventoryHolder, Container, Nameabl
 							new DoubleTag("", $motion[2])
 						]),
 						"Rotation" => new ListTag("Rotation", [
-							new FloatTag("", lcg_value() * 360),
+							new FloatTag("", Utils::randomFloat() * 360),
 							new FloatTag("", 0)
 						]),
 						"Health" => new ShortTag("Health", 5),

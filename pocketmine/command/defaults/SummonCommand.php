@@ -135,7 +135,7 @@ class SummonCommand extends VanillaCommand{
 				new DoubleTag("", 0)
 			]),
 			"Rotation" => new ListTag("Rotation", [
-				new FloatTag("", lcg_value() * 360),
+				new FloatTag("", Utils::randomFloat() * 360),
 				new FloatTag("", 0)
 			]),
 		]);

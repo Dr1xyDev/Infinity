@@ -157,7 +157,7 @@ class BinaryStream extends \stdClass{
 	}
 
 	public function putByte($v){
-		$this->buffer .= chr($v);
+		$this->buffer .= chr((int) $v);
 	}
 
 	public function getDataArray($len = 10){

@@ -827,7 +827,7 @@ abstract class Entity extends Location implements Metadatable{
 				$direction = 5;
 			}
 
-			$force = lcg_value() * 0.2 + 0.1;
+			$force = Utils::randomFloat() * 0.2 + 0.1;
 
 			if($direction === 0){
 				$this->motionX = -$force;

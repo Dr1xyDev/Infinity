@@ -1558,7 +1558,7 @@ class Level implements ChunkManager, Metadatable{
 	 * @return null|DroppedItem
 	 */
 	public function dropItem(Vector3 $source, Item $item, ?Vector3 $motion = null, int $delay = 10){
-		$motion = $motion === null ? new Vector3(lcg_value() * 0.2 - 0.1, 0.2, lcg_value() * 0.2 - 0.1) : $motion;
+		$motion = $motion === null ? new Vector3(Utils::randomFloat() * 0.2 - 0.1, 0.2, Utils::randomFloat() * 0.2 - 0.1) : $motion;
 		$itemTag = NBT::putItemHelper($item);
 		$itemTag->setName("Item");
 
@@ -1576,7 +1576,7 @@ class Level implements ChunkManager, Metadatable{
 					new DoubleTag("", $motion->z)
 				]),
 				"Rotation" => new ListTag("Rotation", [
-					new FloatTag("", lcg_value() * 360),
+					new FloatTag("", Utils::randomFloat() * 360),
 					new FloatTag("", 0)
 				]),
 				"Health" => new ShortTag("Health", 5),
