@@ -39,6 +39,13 @@ interface Info{
 		self::LEVEL_EVENT_PACKET => true,
 		self::BLOCK_EVENT_PACKET => true,
 		self::MOVE_PLAYER_PACKET => true,
+		// PM5-style interaction feedback: instant to the sender, no tick delay
+		self::ADD_ITEM_ENTITY_PACKET => true,
+		self::TAKE_ITEM_ENTITY_PACKET => true,
+		self::REMOVE_ENTITY_PACKET => true,
+		self::REMOVE_BLOCK_PACKET => true,
+		self::ANIMATE_PACKET => true,
+		self::SET_ENTITY_MOTION_PACKET => true,
 	];
 
 	const LOGIN_PACKET = 0x01;

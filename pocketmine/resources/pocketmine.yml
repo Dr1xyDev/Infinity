@@ -71,7 +71,7 @@ memory:
   low-memory-trigger: true
 
  world-caches:
-  disable-chunk-cache: true
+  disable-chunk-cache: false
   low-memory-trigger: true
 
 
@@ -112,12 +112,12 @@ level-settings:
 
 chunk-sending:
  #Amount of chunks sent to players per tick
- per-tick: 8 #View distance in chunks around each player (the client may request more, vanilla-style)
+ per-tick: 12 #View distance in chunks around each player (the client may request more, vanilla-style)
  view-distance: 8
  #Amount of chunks sent around each player
  max-chunks: 32
  #Amount of chunks that need to be sent before spawning the player
- spawn-threshold: 80
+ spawn-threshold: 40
  #Save a serialized copy of the chunk in memory for faster sending
  #Useful in mostly-static worlds where lots of players join at the same time
  cache-chunks: true

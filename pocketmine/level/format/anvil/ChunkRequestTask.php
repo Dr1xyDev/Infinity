@@ -28,6 +28,7 @@ use pocketmine\scheduler\AsyncTask;
 use pocketmine\Server;
 use pocketmine\tile\Spawnable;
 use pocketmine\utils\BinaryStream;
+use pocketmine\utils\Memis;
 
 
 class ChunkRequestTask extends AsyncTask{
@@ -73,8 +74,8 @@ class ChunkRequestTask extends AsyncTask{
 			$chunk->getBlockDataArray() .
 			$chunk->getBlockSkyLightArray() .
 			$chunk->getBlockLightArray() .
-			pack("C*", ...$chunk->getHeightMapArray()) .
-			pack("N*", ...$chunk->getBiomeColorArray()) .
+			Memis::packHeightMap($chunk->getHeightMapArray()) .
+			Memis::packBiomeColors($chunk->getBiomeColorArray()) .
 			$extraData->getBuffer() .
 			$this->tiles;
 

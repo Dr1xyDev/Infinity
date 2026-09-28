@@ -44,7 +44,7 @@ El nucleo acelera sus hot paths CPU mediante `memis.so` (PHP FFI, `pocketmine/ut
 
 ## 🚀 Latencia de red (jugador ↔ servidor):
 - Feedback de interacción (romper/colocar bloque, partículas, sonido, movimiento) se envía con prioridad inmediata de raklib y se vacía al instante, no al final del tick
-- Flujo de chunks al jugador más agresivo (8 chunks/tick por defecto)
+- Flujo de chunks al jugador más agresivo (12 chunks/tick por defecto, umbral de spawn reducido a 40) y caché de chunks activada (menos recompresión y re-serialización al enviar)
 - Compresión zlib nivel 6 y más workers asíncronos (un worker menos que los cores detectados)
 
 ## 🛠 Binario PHP 8.4:

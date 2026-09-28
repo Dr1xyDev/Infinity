@@ -439,13 +439,30 @@ namespace pocketmine {
 		++$errors;
 	}
 
-	if(!extension_loaded("zlib")){
-		$logger->critical("Unable to find the Zlib extension.");
+	if(!extension_loaded("zlib") and !extension_loaded("libdeflate")){
+		$logger->critical("Unable to find the Zlib or libdeflate extension.");
 		++$errors;
 	}
 
+	$optionalExtensions = [
+		"libdeflate" => "faster chunk/network compression (PM5-style)",
+		"morton" => "faster Morton encoding used by worlds",
+		"chunkutils2" => "faster chunk utilities",
+		"igbinary" => "faster serialization",
+		"xxhash" => "faster hashing"
+	];
+	$missingExtensions = [];
+	foreach($optionalExtensions as $ext => $benefit){
+		if(!extension_loaded($ext)){
+			$missingExtensions[] = "$ext ($benefit)";
+		}
+	}
+	if(count($missingExtensions) > 0){
+		$logger->warning("Optional performance extensions not loaded (included in the official Infinity PHP binary): " . implode(", ", $missingExtensions));
+	}
+
 	if($errors > 0){
-		$logger->critical("Please update your PHP from itxtech.org/download, or recompile PHP again.");
+		$logger->critical("Please update your PHP from https://github.com/Dr1xyDev/PHP-Binaries-Infinity");
 		$logger->shutdown();
 		$logger->join();
 		exit(1); //Exit with error
