@@ -35,6 +35,11 @@ int msi_pack_heightmap(const int64_t *hm, unsigned char *out);
 int msi_unpack_heightmap(const unsigned char *hm, int *out);
 int msi_pack_biomecolors(const int *colors, unsigned char *out);
 int msi_unpack_biomecolors(const unsigned char *colors, int64_t *out);
+int msi_vanilla_terrain(const int *perm, int octaves, double persistence, double expansion,
+                        double offx, double offy, double offz, int chunkX, int chunkZ,
+                        const double *envA, const double *envR, const double *envM,
+                        const double *envD, const double *riverDepth,
+                        int waterHeight, int layout, unsigned char *out);
 CDEF;
 
 $path = getenv("INFINITY_NATIVE_LIB");
@@ -49,8 +54,8 @@ if(!is_file($path)){
 $ffi = \FFI::cdef($cdef, $path);
 $v = (int) $ffi->msi_version();
 echo "memis.so: $path (API $v)\n";
-if($v < 4){
-	fwrite(STDERR, "API vieja, se requiere >= 4\n");
+if($v < 5){
+	fwrite(STDERR, "API vieja, se requiere >= 5\n");
 	exit(1);
 }
 
@@ -639,6 +644,89 @@ for($i = 0; $i < 256; ++$i){
 	$natUnStr .= pack("E", $bcOut[$i]);
 }
 check("unpack_biomecolors (N unsigned)", $phpUnStr, $natUnStr);
+
+/* --- 4c. terreno vanilla (ambos layouts) ------------------------------ */
+
+echo "Test: vanilla_terrain\n";
+
+/** Fallback PHP exacto del pipeline vanilla de Normal::generateChunk */
+function php_vanilla_fill($permArr, $ox, $oy, $oz, $oct, $pers, $exp, $cx, $cz,
+                          $envA, $envR, $envM, $envD, $riverDepth, $water, $layout){
+	$noise = new PhpSimplex($permArr, $ox, $oy, $oz);
+	$makeField = function($rate, $y) use ($noise, $oct, $pers, $exp, $ox, $oy, $oz, $cx, $cz){
+		$xs = 16; $zs = 16;
+		$f = [];
+		for($xx = 0; $xx <= $xs; $xx += $rate){
+			for($zz = 0; $zz <= $zs; $zz += $rate){
+				$f[$xx][$zz] = php_octave_noise($noise, $oct, $pers, $exp, $ox, $oy, $oz, $cx * 16 + $xx, $y, $cz * 16 + $zz, false);
+			}
+		}
+		for($xx = 0; $xx < $xs; ++$xx){
+			for($zz = 0; $zz < $zs; ++$zz){
+				if($xx % $rate !== 0 or $zz % $rate !== 0){
+					$nx = (int) ($xx / $rate) * $rate;
+					$nz = (int) ($zz / $rate) * $rate;
+					$nnx = $nx + $rate; $nnz = $nz + $rate;
+					$dx1 = (($nnx - $xx) / ($nnx - $nx));
+					$dx2 = (($xx - $nx) / ($nnx - $nx));
+					$f[$xx][$zz] = (($nnz - $zz) / ($nnz - $nz)) * ($dx1 * $f[$nx][$nz] + $dx2 * $f[$nnx][$nz])
+						+ (($zz - $nz) / ($nnz - $nz)) * ($dx1 * $f[$nx][$nnz] + $dx2 * $f[$nnx][$nnz]);
+				}
+			}
+		}
+		return $f;
+	};
+	$hills = $makeField(4, 64);
+	$detail = $makeField(2, 96);
+	$ridge = $makeField(4, 160);
+
+	$b = str_repeat("\x00", 32768);
+	$idx = $layout === 0 ? "php_anvil_idx" : "php_flat_idx";
+	for($x = 0; $x < 16; ++$x){
+		for($z = 0; $z < 16; ++$z){
+			$i = ($z << 4) + $x;
+			$r = 1.0 - $ridge[$x][$z];
+			if($r < 0){ $r = 0; }
+			$r *= $r;
+			$height = $envA[$i] + $hills[$x][$z] * $envR[$i]
+				+ $ridge[$x][$z] * $envM[$i] * $r
+				+ $detail[$x][$z] * $envD[$i]
+				- $riverDepth[$i];
+			$hi = (int) $height;
+			if($hi > 127){ $hi = 127; }
+			if($hi < 1){ $hi = 1; }
+			for($y = 1; $y <= $hi; ++$y){ $b[$idx($x, $y, $z)] = "\x01"; }
+			$b[$idx($x, 0, $z)] = "\x07";
+			for($y = $hi + 1; $y <= $water; ++$y){ $b[$idx($x, $y, $z)] = "\x09"; }
+		}
+	}
+	return $b;
+}
+
+$vA = []; $vR = []; $vM = []; $vD = []; $vRiv = [];
+for($i = 0; $i < 256; ++$i){
+	$vA[$i] = 58 + (mt_rand() / mt_getrandmax()) * 10;
+	$vR[$i] = 2 + (mt_rand() / mt_getrandmax()) * 14;
+	$vM[$i] = (mt_rand() / mt_getrandmax()) < 0.35 ? (mt_rand() / mt_getrandmax()) * 30 : 0.0;
+	$vD[$i] = 1.6;
+	$vRiv[$i] = (mt_rand() / mt_getrandmax()) < 0.2 ? 2 + (mt_rand() / mt_getrandmax()) * 5 : 0.0;
+}
+$vBufs = [];
+foreach([$vA, $vR, $vM, $vD, $vRiv] as $k => $arr){
+	$b = $ffi->new("double[256]");
+	foreach($arr as $i => $val){ $b[$i] = $val; }
+	$vBufs[$k] = $b;
+}
+$cx3 = mt_rand(-50, 50); $cz3 = mt_rand(-50, 50);
+$vanOut = $ffi->new("unsigned char[32768]");
+foreach([0, 1] as $layout){
+	$rc = (int) $ffi->msi_vanilla_terrain($perm, 4, 0.25, 0.03125, $ox, $oy, $oz, $cx3, $cz3,
+		$vBufs[0], $vBufs[1], $vBufs[2], $vBufs[3], $vBufs[4], 62, $layout, $vanOut);
+	if($rc !== 0){ echo "FAIL  vanilla_terrain layout=$layout rc=$rc\n"; ++$fail; continue; }
+	$natStr = \FFI::string($vanOut, 32768);
+	$phpStr = php_vanilla_fill($permArr, $ox, $oy, $oz, 4, 0.25, 0.03125, $cx3, $cz3, $vA, $vR, $vM, $vD, $vRiv, 62, $layout);
+	check("vanilla_terrain layout=$layout", $phpStr, $natStr);
+}
 
 /* --- resultado -------------------------------------------------------- */
 

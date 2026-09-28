@@ -50,6 +50,9 @@ class Memis{
 	/** @var \FFI|null cdef de los unpack de la API 4 (null si el .so es viejo) */
 	private static $ffiUnpack = null;
 
+	/** @var \FFI|null cdef del terreno vanilla de la API 5 (null si el .so es viejo) */
+	private static $ffiVanilla = null;
+
 	/** @var bool */
 	private static $enabled = false;
 
@@ -101,6 +104,20 @@ int msi_unpack_heightmap(const unsigned char *hm, int *out);
 int msi_unpack_biomecolors(const unsigned char *colors, int64_t *out);
 CDEF;
 
+	/**
+	 * Simbolos de la API 5 (terreno vanilla de Normal): cdef aparte para
+	 * que un memis.so viejo siga acelerando el resto de rutas.
+	 */
+	private static $CDEF_VANILLA = <<<'CDEF'
+int msi_vanilla_terrain(const int *perm,
+                        int octaves, double persistence, double expansion,
+                        double offx, double offy, double offz,
+                        int chunkX, int chunkZ,
+                        const double *envA, const double *envR, const double *envM,
+                        const double *envD, const double *riverDepth,
+                        int waterHeight, int layout, unsigned char *out);
+CDEF;
+
 	private function __construct(){
 	}
 
@@ -136,6 +153,13 @@ CDEF;
 				self::$ffiUnpack = \FFI::cdef(self::$CDEF_UNPACK, $path);
 			}catch(\Throwable $e){
 				self::$ffiUnpack = null;
+			}
+		}
+		if($version >= 5){
+			try{
+				self::$ffiVanilla = \FFI::cdef(self::$CDEF_VANILLA, $path);
+			}catch(\Throwable $e){
+				self::$ffiVanilla = null;
 			}
 		}
 	}catch(\Throwable $e){
@@ -223,6 +247,74 @@ CDEF;
 				$full = $dir . $f;
 				if(\is_file($full)){
 					return \realpath($full) ?: $full;
+				}
+			}
+		}
+
+		// 3) auto-extraccion: si el nucleo trae binarios embebidos en
+		//    resources/libs/<os>/ (phar o src), copia el del SO actual a
+		//    libs/ la primera vez que arranca el servidor
+		$extracted = self::extractEmbeddedLibrary($dir);
+		if($extracted !== null){
+			return $extracted;
+		}
+
+		return null;
+	}
+
+	/**
+	 * Detecta el SO/arquitectura actual y devuelve el nombre de subcarpeta
+	 * de resources/libs/ que le corresponde (o null si no hay soporte).
+	 *
+	 * @return string|null
+	 */
+	private static function detectPlatformDir(){
+		$os = \php_uname("s");
+		$arch = \php_uname("m");
+		if(\stripos($os, "android") !== false || \defined("PHP_ANDROID")){
+			return "android";
+		}
+		if(\stripos($os, "linux") !== false){
+			return (\stripos($arch, "aarch64") !== false || \stripos($arch, "arm64") !== false) ? "linux-arm64-cobalt" : "linux-x86_64";
+		}
+		return null;
+	}
+
+	/**
+	 * Busca el binario embebido para este SO en <nucleo>/resources/libs/<os>/
+	 * (funciona dentro de un phar y en src pelado), lo copia a libs/ y
+	 * devuelve su ruta; null si no hay binario embebido compatible.
+	 *
+	 * @param string $libsDir carpeta libs/ del server (con separador final)
+	 *
+	 * @return string|null
+	 */
+	private static function extractEmbeddedLibrary($libsDir){
+		$platform = self::detectPlatformDir();
+		if($platform === null){
+			return null;
+		}
+
+		$bases = [];
+		if(\defined('pocketmine\PATH')){
+			$bases[] = \constant('pocketmine\PATH'); // phar://.../src/ o .../src/
+		}
+		$bases[] = \dirname(\dirname(__DIR__)) . DIRECTORY_SEPARATOR; // raiz del nucleo en src
+
+		foreach($bases as $base){
+			$resDir = $base . "pocketmine" . DIRECTORY_SEPARATOR . "resources" . DIRECTORY_SEPARATOR . "libs" . DIRECTORY_SEPARATOR . $platform . DIRECTORY_SEPARATOR;
+			if(!\is_dir($resDir)){
+				continue;
+			}
+			$files = @\scandir($resDir) ?: [];
+			foreach($files as $f){
+				if(\is_string($f) && \substr($f, -3) === ".so"){
+					$src = $resDir . $f;
+					$dest = $libsDir . $f;
+					if(!@\copy($src, $dest) || !\is_file($dest)){
+						continue;
+					}
+					return \realpath($dest) ?: $dest;
 				}
 			}
 		}
@@ -732,6 +824,68 @@ CDEF;
 					(int) $noise->getOctaves(), (double) $noise->getPersistence(), (double) $noise->getExpansion(),
 					(double) $noise->getOffsetX(), (double) $noise->getOffsetY(), (double) $noise->getOffsetZ(),
 					(int) $chunkX, (int) $chunkZ, $mn, $mx, (int) $waterHeight, $layout, $out
+				);
+				if($rc === 0){
+					return \FFI::string($out, 32768);
+				}
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * Relleno de terreno vanilla de Normal::generateChunk (base + colinas +
+	 * montanas + detalle + rios) en un solo paso nativo.
+	 * Devuelve null si se usa la ruta PHP.
+	 *
+	 * @param \pocketmine\level\generator\noise\Noise $noise
+	 * @param int                                     $chunkX
+	 * @param int                                     $chunkZ
+	 * @param float[]                                 $envA  256 valores (indice (z << 4) + x)
+	 * @param float[]                                 $envR  256 valores
+	 * @param float[]                                 $envM  256 valores
+	 * @param float[]                                 $envD  256 valores
+	 * @param float[]                                 $riverDepth 256 valores
+	 * @param int                                     $waterHeight
+	 * @param int                                     $layout 0 = anvil, 1 = mcregion/leveldb
+	 *
+	 * @return string|null 32768 bytes (layout del chunk) o null
+	 */
+	public static function vanillaTerrain($noise, $chunkX, $chunkZ, array $envA, array $envR, array $envM, array $envD, array $riverDepth, $waterHeight, $layout){
+		self::init();
+		if(self::$ffiVanilla !== null and \count($envA) === 256 and \count($envR) === 256 and \count($envM) === 256 and \count($envD) === 256 and \count($riverDepth) === 256 and ($layout === 0 or $layout === 1)){
+			$perm = self::getPermTable($noise);
+			if($perm === null){
+				return null;
+			}
+			$bufs = [];
+			$ok = true;
+			foreach([$envA, $envR, $envM, $envD, $riverDepth] as $k => $arr){
+				$b = self::$ffiVanilla->new("double[256]");
+				for($i = 0; $i < 256; ++$i){
+					$v = $arr[$i];
+					if(\is_int($v)){ $v = (float) $v; }
+					if(!\is_float($v) or !\is_finite($v)){
+						$ok = false;
+						break;
+					}
+					$b[$i] = $v;
+				}
+				if(!$ok){
+					break;
+				}
+				$bufs[$k] = $b;
+			}
+			if($ok){
+				$out = self::$ffiVanilla->new("unsigned char[32768]");
+				$rc = (int) self::$ffiVanilla->msi_vanilla_terrain(
+					$perm,
+					(int) $noise->getOctaves(), (double) $noise->getPersistence(), (double) $noise->getExpansion(),
+					(double) $noise->getOffsetX(), (double) $noise->getOffsetY(), (double) $noise->getOffsetZ(),
+					(int) $chunkX, (int) $chunkZ,
+					$bufs[0], $bufs[1], $bufs[2], $bufs[3], $bufs[4],
+					(int) $waterHeight, $layout, $out
 				);
 				if($rc === 0){
 					return \FFI::string($out, 32768);

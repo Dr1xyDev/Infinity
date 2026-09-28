@@ -6,7 +6,9 @@
  *  - msi_sky_light / msi_sky_light_sections : skylight de chunks (relleno vertical)
  *  - msi_heightmap                          : recalculateHeightMap (anvil y flat)
  *  - msi_fast_noise3d / msi_fast_noise2d    : Generator::getFastNoise3D/2D
- *  - msi_generate_normal                    : relleno de terreno de Normal
+ *  - msi_generate_normal                    : relleno de terreno de Normal (clasico)
+ *  - msi_vanilla_terrain                    : terreno vanilla de Normal (base +
+ *                                             colinas + montanas + rios, 1 paso)
  *  - msi_pack_nibbles / msi_unpack_nibbles  : empaquetado de nibbles
  *  - msi_pack/unpack_heightmap / msi_pack/unpack_biomecolors : serializacion de chunks
  *
@@ -25,7 +27,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define MEMIS_API_VERSION 4
+#define MEMIS_API_VERSION 5
 
 /* ------------------------------------------------------------------ */
 /* Tabla de gradiente (Simplex::$grad3)                                */
@@ -474,6 +476,136 @@ int msi_generate_normal(const int *perm,
 	}
 
 	free(field);
+	return 0;
+}
+
+/* ------------------------------------------------------------------ */
+/* Terreno vanilla (Normal)                                            */
+/* ------------------------------------------------------------------ */
+
+/* Campo de ruido 2D compartido: muestreo reticular + interpolacion
+ * bilineal (identico a Generator::getFastNoise2D). Args ya validados. */
+static void msi_noise_field2d(const int *perm,
+                              int octaves, double persistence, double expansion,
+                              double offx, double offy, double offz,
+                              int xs, int zs, int rate,
+                              int x, int y, int z, double *out){
+	int zspan = zs + 1;
+
+	for(int xx = 0; xx <= xs; xx += rate){
+		for(int zz = 0; zz <= zs; zz += rate){
+			out[xx * zspan + zz] =
+				msi_octave_noise3d(perm, octaves, persistence, expansion,
+					offx, offy, offz,
+					(double) (x + xx), (double) y, (double) (z + zz), 0);
+		}
+	}
+
+	for(int xx = 0; xx < xs; ++xx){
+		for(int zz = 0; zz < zs; ++zz){
+			if((xx % rate) != 0 || (zz % rate) != 0){
+				int nx = (xx / rate) * rate;
+				int nz = (zz / rate) * rate;
+				int nnx = nx + rate;
+				int nnz = nz + rate;
+
+				double dx1 = (nnx - xx) / (double) (nnx - nx);
+				double dx2 = (xx - nx) / (double) (nnx - nx);
+
+				double q00 = out[nx * zspan + nz];
+				double q01 = out[nx * zspan + nnz];
+				double q10 = out[nnx * zspan + nz];
+				double q11 = out[nnx * zspan + nnz];
+
+				out[xx * zspan + zz] =
+					((nnz - zz) / (double) (nnz - nz)) * (dx1 * q00 + dx2 * q10) +
+					((zz - nz) / (double) (nnz - nz)) * (dx1 * q01 + dx2 * q11);
+			}
+		}
+	}
+}
+
+/* Terreno vanilla de Normal en un solo paso nativo, byte-identico a la
+ * ruta PHP. El PHP prepara las envolventes suavizadas de biomas (256
+ * valores por columna, indice (z << 4) + x):
+ *  - envA       altura base de la columna (px)
+ *  - envR       amplitud de colinas (px)
+ *  - envM       amplitud de montanas (px)
+ *  - envD       amplitud de detalle fino (px)
+ *  - riverDepth profundidad del rio ya calculada (px, 0 = sin rio)
+ * Los campos de ruido (colinas, detalle, crestas) se calculan AQUI con
+ * las mismas formulas que Generator::getFastNoise2D.
+ * out debe ser un buffer de 32768 bytes; las celdas no escritas quedan 0. */
+int msi_vanilla_terrain(const int *perm,
+                        int octaves, double persistence, double expansion,
+                        double offx, double offy, double offz,
+                        int chunkX, int chunkZ,
+                        const double *envA, const double *envR, const double *envM,
+                        const double *envD, const double *riverDepth,
+                        int waterHeight, int layout, unsigned char *out){
+	if(layout != 0 && layout != 1){
+		return 1;
+	}
+	const int xs = 16, zs = 16;
+	const int zspan = zs + 1;
+
+	double *hills = (double *) malloc(sizeof(double) * (xs + 1) * zspan);
+	double *detail = (double *) malloc(sizeof(double) * (xs + 1) * zspan);
+	double *ridge = (double *) malloc(sizeof(double) * (xs + 1) * zspan);
+	if(hills == NULL || detail == NULL || ridge == NULL){
+		free(hills); free(detail); free(ridge);
+		return 2;
+	}
+	msi_noise_field2d(perm, octaves, persistence, expansion, offx, offy, offz,
+		xs, zs, 4, chunkX * 16, 64, chunkZ * 16, hills);
+	msi_noise_field2d(perm, octaves, persistence, expansion, offx, offy, offz,
+		xs, zs, 2, chunkX * 16, 96, chunkZ * 16, detail);
+	msi_noise_field2d(perm, octaves, persistence, expansion, offx, offy, offz,
+		xs, zs, 4, chunkX * 16, 160, chunkZ * 16, ridge);
+
+	memset(out, 0, 32768);
+
+	for(int x = 0; x < 16; ++x){
+		for(int z = 0; z < 16; ++z){
+			int i = (z << 4) + x;
+			int fi = x * zspan + z;
+
+			/* crestas ridged (vanilla-style): 1 - |ruido|, elevado al cuadrado */
+			double r = 1.0 - ridge[fi];
+			if(r < 0.0){ r = 0.0; }
+			r *= r;
+
+			double height = envA[i]
+				+ hills[fi] * envR[i]
+				+ ridge[fi] * envM[i] * r
+				+ detail[fi] * envD[i]
+				- riverDepth[i];
+
+			int hi = (int) height;
+			if(hi > 127){
+				hi = 127;
+			}
+			if(hi < 1){
+				hi = 1;
+			}
+
+			/* interior de piedra siguiendo el terreno (las cuevas las talla
+			 * despues el populator Cave, como en vanilla) */
+			for(int y = 1; y <= hi; ++y){
+				out[layout == 0 ? msi_anvil_idx(x, y, z) : msi_flat_idx(x, y, z)] = 1; /* piedra */
+			}
+			out[layout == 0 ? msi_anvil_idx(x, 0, z) : msi_flat_idx(x, 0, z)] = 7; /* bedrock */
+
+			/* agua hasta el nivel del mar donde la columna queda por debajo */
+			if(hi < waterHeight){
+				for(int y = hi + 1; y <= waterHeight; ++y){
+					out[layout == 0 ? msi_anvil_idx(x, y, z) : msi_flat_idx(x, y, z)] = 9; /* agua */
+				}
+			}
+		}
+	}
+
+	free(hills); free(detail); free(ridge);
 	return 0;
 }
 

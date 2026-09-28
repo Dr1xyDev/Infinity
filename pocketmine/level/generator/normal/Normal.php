@@ -68,6 +68,8 @@ class Normal extends Generator{
 	protected $generationPopulators = [];
 	/** @var Simplex */
 	protected $noiseBase;
+	/** @var Simplex ruido de rios (compartido por las rutas nativa y PHP) */
+	protected $riverNoise;
 
 	/** @var BiomeSelector */
 	protected $selector;
@@ -138,6 +140,7 @@ class Normal extends Generator{
 		$this->random = $random;
 		$this->random->setSeed($this->level->getSeed());
 		$this->noiseBase = new Simplex($this->random, 4, 1 / 4, 1 / 32);
+		$this->riverNoise = new Simplex($this->random, 2, 1 / 2, 1 / 128);
 		$this->random->setSeed($this->level->getSeed());
 		$this->selector = new BiomeSelector($this->random, function($temperature, $rainfall){
 			if($rainfall < 0.25){
@@ -267,82 +270,119 @@ class Normal extends Generator{
 				$minSumCol[($z << 4) + $x] = $minSum;
 				$maxSumCol[($z << 4) + $x] = $maxSum;
 			}
-		}
+		}		$layout = $chunk instanceof BaseChunk ? 0 : 1;
 
-		if(Memis::isEnabled()){
-			$layout = $chunk instanceof BaseChunk ? 0 : 1;
-			$native = Memis::generateNormal($this->noiseBase, $chunkX, $chunkZ, $minSumCol, $maxSumCol, $this->waterHeight, $layout);
-			if($native !== null){
-				if($layout === 0){
-					$providerClass = $chunk->getProvider();
-					if($providerClass === null){
-						$native = null;
-					}else{
-						$providerClass = ($providerClass instanceof \pocketmine\level\format\LevelProvider) ? \get_class($providerClass) : $providerClass;
-						for($sy = 0; $sy < 8 and $native !== null; ++$sy){
-							$section = $providerClass::createChunkSection($sy);
-							try{
-								$prop = self::$sectionBlocksProp ?? (self::$sectionBlocksProp = new \ReflectionProperty($section, "blocks"));
-								$prop->setAccessible(true);
-								$prop->setValue($section, substr($native, $sy * 4096, 4096));
-							}catch(\ReflectionException $e){
-								$native = null;
-								break;
-							}
-							$chunk->setSection($sy, $section);
-						}
-					}
+		/* Rios vanilla: campo 2D del ruido de rio con tasa 1 (mismo camino
+		 * que Generator::getFastNoise2D para que nativo y PHP coincidan). */
+		$riverField = Memis::getFastNoise2D($this->riverNoise, 16, 16, 1, $chunkX * 16, 0, $chunkZ * 16);
+		$riverDepth = [];
+		for($x = 0; $x < 16; ++$x){
+			for($z = 0; $z < 16; ++$z){
+				$rv = $riverField !== null ? $riverField[$x][$z] : $this->riverNoise->noise3D($chunkX * 16 + $x, 0, $chunkZ * 16 + $z);
+				$bank = abs($rv);
+				if($bank < 0.04){
+					$w = 1.0;
+				}elseif($bank < 0.10){
+					$w = 1.0 - ($bank - 0.04) / 0.06;
 				}else{
-					try{
-						$prop = self::$flatBlocksProp ?? (self::$flatBlocksProp = new \ReflectionProperty(\get_class($chunk), "blocks"));
-						$prop->setAccessible(true);
-						$prop->setValue($chunk, $native);
-					}catch(\ReflectionException $e){
-						$native = null;
-					}
-				}					if($native !== null){
-						// la ruta nativa rellena solo terreno: los populators de generacion (ground cover: cesped)
-						// deben correr igual que en la ruta PHP
-						foreach($this->generationPopulators as $populator){
-							$populator->populate($this->level, $chunkX, $chunkZ, $this->random);
-						}
-						return;
-					}
+					$w = 0.0;
+				}
+				$depth = $w * max(2.0, $this->waterHeight - 58.0);
+				/* el rio solo corta cerca del nivel del mar: en montanas muy
+				 * altas se desvanece para no abrir canonos raros */
+				$env = 1.0 - max(0.0, min(1.0, ($maxSumCol[($z << 4) + $x] - ($this->waterHeight + 24)) / 24.0));
+				$riverDepth[($z << 4) + $x] = $depth * $env;
 			}
 		}
 
-		$noise = Generator::getFastNoise3D($this->noiseBase, 16, 128, 16, 4, 8, 4, $chunkX * 16, 0, $chunkZ * 16);
+		/* Envolventes vanilla por columna (indice (z << 4) + x):
+		 * base + colinas + montanas (crestas) + detalle fino */
+		$envA = [];
+		$envR = [];
+		$envM = [];
+		$envD = [];
+		for($i = 0; $i < 256; ++$i){
+			$mn = $minSumCol[$i];
+			$mx = $maxSumCol[$i];
+			/* superficie centrada en el punto medio del bioma: los llanos
+			 * quedan sobre el nivel del mar, el oceano debajo y las montanas
+			 * suben con crestas ridged hasta su maxElevation */
+			$envA[$i] = ($mn + $mx) * 0.5;
+			$envR[$i] = max(1.0, ($mx - $mn) * 0.30);
+			$envM[$i] = max(0.0, ($mx - $mn) * 0.45);
+			$envD[$i] = 1.6;
+		}
+
+		$native = Memis::vanillaTerrain($this->noiseBase, $chunkX, $chunkZ, $envA, $envR, $envM, $envD, $riverDepth, $this->waterHeight, $layout);
+		if($native !== null){
+			if($layout === 0){
+				$providerClass = $chunk->getProvider();
+				if($providerClass === null){
+					$native = null;
+				}else{
+					$providerClass = ($providerClass instanceof \pocketmine\level\format\LevelProvider) ? \get_class($providerClass) : $providerClass;
+					for($sy = 0; $sy < 8 and $native !== null; ++$sy){
+						$section = $providerClass::createChunkSection($sy);
+						try{
+							$prop = self::$sectionBlocksProp ?? (self::$sectionBlocksProp = new \ReflectionProperty($section, "blocks"));
+							$prop->setAccessible(true);
+							$prop->setValue($section, substr($native, $sy * 4096, 4096));
+						}catch(\ReflectionException $e){
+							$native = null;
+							break;
+						}
+						$chunk->setSection($sy, $section);
+					}
+				}
+			}else{
+				try{
+					$prop = self::$flatBlocksProp ?? (self::$flatBlocksProp = new \ReflectionProperty(\get_class($chunk), "blocks"));
+					$prop->setAccessible(true);
+					$prop->setValue($chunk, $native);
+				}catch(\ReflectionException $e){
+					$native = null;
+				}
+			}
+			if($native !== null){
+				// la ruta nativa rellena solo terreno: los populators de generacion (ground cover: cesped)
+				// deben correr igual que en la ruta PHP
+				foreach($this->generationPopulators as $populator){
+					$populator->populate($this->level, $chunkX, $chunkZ, $this->random);
+				}
+				return;
+			}
+		}
+
+		/* Fallback PHP: el MISMO pipeline vanilla, byte-identico */
+		$field = Generator::getFastNoise2D($this->noiseBase, 16, 16, 4, $chunkX * 16, 64, $chunkZ * 16);
+		$fieldDetail = Generator::getFastNoise2D($this->noiseBase, 16, 16, 2, $chunkX * 16, 96, $chunkZ * 16);
+		$fieldRidge = Generator::getFastNoise2D($this->noiseBase, 16, 16, 4, $chunkX * 16, 160, $chunkZ * 16);
 
 		for($x = 0; $x < 16; ++$x){
 			for($z = 0; $z < 16; ++$z){
-				$minSum = $minSumCol[($z << 4) + $x];
-				$maxSum = $maxSumCol[($z << 4) + $x];
-
-				$solidLand = false;
-				for($y = 127; $y >= 0; --$y){
-					if($y === 0){
-						$chunk->setBlockId($x, $y, $z, Block::BEDROCK);
-						continue;
-					}
-
-					// A noiseAdjustment of 1 will guarantee ground, a noiseAdjustment of -1 will guarantee air.
-					//$effHeight = min($y - $smoothHeight - $minSum,
-					$noiseAdjustment = 2 * (($maxSum - $y) / ($maxSum - $minSum)) - 1;
-
-
-					// To generate caves, we bring the noiseAdjustment down away from 1.
-					$caveLevel = $minSum - 10;
-					$distAboveCaveLevel = max(0, $y - $caveLevel); // must be positive
-
-					$noiseAdjustment = min($noiseAdjustment, 0.4 + ($distAboveCaveLevel / 10));
-					$noiseValue = $noise[$x][$z][$y] + $noiseAdjustment;
-
-					if($noiseValue > 0){
-						$chunk->setBlockId($x, $y, $z, Block::STONE);
-						$solidLand = true;
-					}elseif($y <= $this->waterHeight && $solidLand == false){
-						$chunk->setBlockId($x, $y, $z, Block::STILL_WATER);
-					}
+				$i = ($z << 4) + $x;
+				$r = 1.0 - $fieldRidge[$x][$z][0];
+				if($r < 0.0){
+					$r = 0.0;
+				}
+				$r *= $r;
+				$height = $envA[$i] + $field[$x][$z] * $envR[$i]
+					+ $fieldRidge[$x][$z] * $envM[$i] * $r
+					+ $fieldDetail[$x][$z] * $envD[$i]
+					- $riverDepth[$i];
+				$hi = (int) $height;
+				if($hi > 127){
+					$hi = 127;
+				}
+				if($hi < 1){
+					$hi = 1;
+				}
+				for($y = 1; $y <= $hi; ++$y){
+					$chunk->setBlockId($x, $y, $z, Block::STONE);
+				}
+				$chunk->setBlockId($x, 0, $z, Block::BEDROCK);
+				for($y = $hi + 1; $y <= $this->waterHeight; ++$y){
+					$chunk->setBlockId($x, $y, $z, Block::STILL_WATER);
 				}
 			}
 		}

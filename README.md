@@ -11,6 +11,8 @@ Version v1.1 release
 - sistema antiddos y antibot mejorado
 - mejora y optimizacion en la jugabilidad
 - bioma de montañas mejorada
+- terreno vanilla de `Normal`: base + colinas + montañas con crestas + detalle fino + ríos serpenteantes, generado en un solo paso nativo C (y con fallback PHP byte-idéntico)
+- el generador `Normal2` fue eliminado: solo existe `Normal`
 - bugs de sintaxis arreglados
 - Generacion de estructuras ( desert village, normal village y desert piramid ) (```use el plugin de InfintyEstructures para habilitar la extension```)
 
@@ -27,13 +29,15 @@ El nucleo acelera sus hot paths CPU mediante `memis.so` (PHP FFI, `pocketmine/ut
 - fastNoise2D/3D (simplex + interpolación) para la generación
 - empaquetado de heightmap, biomeColors y nibbles
 - desempaquetado nativo de heightmap y biomeColors en la carga de chunks (API 4)
+- terreno vanilla de `Normal` (colinas, montañas, ríos) en un solo paso nativo (API 5)
+- auto-extracción: el núcleo trae los binarios embebidos en `pocketmine/resources/libs/<os>/` (android, linux-x86_64, linux-arm64-cobalt) y en el **primer arranque** copia el del SO actual a `libs/` — ya no hace falta colocar nada a mano; sigue priorizando lo que pongas tú en `libs/` o `INFINITY_NATIVE_LIB`
 - además, rutas PHP optimizadas: biomas por región (sin cache por columna) y ground cover con caché de transparencia
 
 - **Colocación manual**: el `.so` ya NO viene incluido. Copia tú mismo el binario correcto para tu SO/arquitectura a la carpeta **`libs/`** del servidor (se crea sola al arrancar): `memis.so`, o directamente el binario sin renombrar (`memis-android-arm64-v8a.so`, `memis-linux-aarch64.so`, `memis-linux-x86_64.so`…) — el núcleo acepta cualquier `.so` que haya dentro. Alternativa: `INFINITY_NATIVE_LIB=/ruta/memis.so`. Sin el `.so`, el núcleo arranca en modo PHP puro sin problema.
 - Si el `.so` existe pero no carga, el boot muestra el motivo: `Memis native acceleration: 0 (PHP puro; no se pudo cargar .../libs/xxx.so (error: ...))` (normalmente es que usaste el binario de otra arquitectura/OS).
 - Binarios precompilados: se generan con el workflow **manual** `Build memis.so` (Actions → Run workflow) para `linux-x86_64`, `linux-arm64-cobalt` y `android`, y se hacen **commit** automáticamente al repo en `native/builded/<target>/` (además de quedar como artefactos descargables).
 - Verificación de versión de API y **fallback PHP byte-idéntico** si falta o es incompatible
-- La API actual es la **4**: si tu `memis.so` es más viejo (API 3), el núcleo igual acelera la generación y el resto de rutas; solo el desempaquetado de chunks cae a `unpack()` de PHP. Para tenerlo todo, regenera los binarios con el workflow `Build memis.so` y vuelve a copiarlos a `libs/`
+- La API actual es la **5**: si tu `memis.so` es más viejo, el núcleo arranca igual y acelera las rutas que tu binario soporte (API 3: generación clásica y más; API 4: + desempaquetado; API 5: + terreno vanilla). Para tenerlo todo, regenera los binarios con el workflow `Build memis.so` — el workflow los commitea en `native/builded/<target>/` **y** los actualiza en `pocketmine/resources/libs/<os>/` para el auto-extract
 - Estado en el boot: `Memis native acceleration: ...`
 - Compilar manualmente: `sh ./native/build.sh` (host) · `cross-aarch64` · `android` (ver workflow `memis-build.yml`, 100% manual)
 - Verificar salida byte-idéntica: `php native/verify_memis.php`
