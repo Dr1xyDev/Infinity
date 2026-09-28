@@ -146,7 +146,7 @@ class RCONInstance extends Thread{
 
 		while($this->stop !== true){
 			$this->synchronized(function(){
-				$this->wait(2000);
+				$this->wait(2);
 			});
 			if($this->socket === null){
 				break;

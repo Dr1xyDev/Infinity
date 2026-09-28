@@ -290,7 +290,7 @@ class MainLogger extends \AttachableThreadedLogger{
 					}
 				}
 
-				$this->wait(200000);
+				$this->wait(200);
 			});
 		}
 

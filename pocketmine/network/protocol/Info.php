@@ -33,6 +33,14 @@ interface Info{
 	const CURRENT_PROTOCOL = 84;
 	const ACCEPTED_PROTOCOLS = [84];
 
+	/** packet ids sent with raklib PRIORITY_IMMEDIATE */
+	const IMMEDIATE_PACKETS = [
+		self::UPDATE_BLOCK_PACKET => true,
+		self::LEVEL_EVENT_PACKET => true,
+		self::BLOCK_EVENT_PACKET => true,
+		self::MOVE_PLAYER_PACKET => true,
+	];
+
 	const LOGIN_PACKET = 0x01;
 	const PLAY_STATUS_PACKET = 0x02;
 	const SERVER_TO_CLIENT_HANDSHAKE_PACKET = 0x03;

@@ -74,7 +74,7 @@ class RCON{
 		foreach($this->workers as $worker){
 			while(!$worker->bound and !$worker->bindError and microtime(true) < $deadline){
 				$worker->synchronized(function(){
-					$this->wait(50000);
+					$this->wait(50);
 				});
 			}
 			if($worker->bindError){

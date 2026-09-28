@@ -39,8 +39,13 @@ El nucleo acelera sus hot paths CPU mediante `memis.so` (PHP FFI, `pocketmine/ut
 - Verificación de versión de API y **fallback PHP byte-idéntico** si falta o es incompatible
 - La API actual es la **5**: si tu `memis.so` es más viejo, el núcleo arranca igual y acelera las rutas que tu binario soporte (API 3: generación clásica y más; API 4: + desempaquetado; API 5: + terreno vanilla). Para tenerlo todo, regenera los binarios con el workflow `Build memis.so` — el workflow los commitea en `native/builded/<target>/` **y** los actualiza en `pocketmine/resources/libs/<os>/` para el auto-extract
 - Estado en el boot: `Memis native acceleration: ...`
-- Compilar manualmente: `sh ./native/build.sh` (host) · `cross-aarch64` · `android` (ver workflow `memis-build.yml`, 100% manual)
+- Compilar manualmente: `sh ./native/build.sh` (host) · `cross-aarch64` · `android` (ver workflow `memis-build.yml`, 100% manual). Fuentes separadas por módulo en `native/src/*.c` con cabecera única `native/include/memis.h`
 - Verificar salida byte-idéntica: `php native/verify_memis.php`
+
+## 🚀 Latencia de red (jugador ↔ servidor):
+- Feedback de interacción (romper/colocar bloque, partículas, sonido, movimiento) se envía con prioridad inmediata de raklib y se vacía al instante, no al final del tick
+- Flujo de chunks al jugador más agresivo (8 chunks/tick por defecto)
+- Compresión zlib nivel 6 y más workers asíncronos (un worker menos que los cores detectados)
 
 ## 🛠 Binario PHP 8.4:
 https://github.com/Dr1xyDev/PHP-Binaries-Infinity

@@ -1560,7 +1560,7 @@ class Server{
 
 	public static function microSleep(int $microseconds){
 		Server::$sleeper->synchronized(function(int $ms){
-			Server::$sleeper->wait($ms);
+			Server::$sleeper->wait((int) round($ms / 1000));
 		}, $microseconds);
 	}
 
@@ -1803,10 +1803,10 @@ class Server{
 
 			if(($poolSize = $this->getProperty("settings.async-workers", "auto")) === "auto"){
 				$poolSize = ServerScheduler::$WORKERS;
-				$processors = Utils::getCoreCount() - 2;
+				$processors = Utils::getCoreCount() - 1;
 
 				if($processors > 0){
-					$poolSize = max(1, $processors);
+					$poolSize = max(2, $processors);
 				}
 			}
 
@@ -1817,7 +1817,7 @@ class Server{
 			}else{
 				Network::$BATCH_THRESHOLD = -1;
 			}
-			$this->networkCompressionLevel = $this->getProperty("network.compression-level", 7);
+			$this->networkCompressionLevel = $this->getProperty("network.compression-level", 6);
 			$this->networkCompressionAsync = $this->getProperty("network.async-compression", true);
 
 			$this->autoTickRate = (bool) $this->getProperty("level-settings.auto-tick-rate", true);

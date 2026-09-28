@@ -714,7 +714,7 @@ class Player extends Human implements CommandSender, InventoryHolder, ChunkLoade
 		$this->port = $port;
 		$this->clientID = $clientID;
 		$this->loaderId = Level::generateChunkLoaderId($this);
-		$this->chunksPerTick = (int) $this->server->getProperty("chunk-sending.per-tick", 4);
+		$this->chunksPerTick = (int) $this->server->getProperty("chunk-sending.per-tick", 8);
 		$this->spawnThreshold = (int) $this->server->getProperty("chunk-sending.spawn-threshold", 56);
 		$this->clientChunkRadius = -1;
 		$this->spawnPosition = null;
@@ -1171,6 +1171,9 @@ class Player extends Human implements CommandSender, InventoryHolder, ChunkLoade
 		}
 
 		$this->batchedPackets[] = clone $packet;
+		// send now, not at end of tick: cuts visible input latency
+		$this->server->batchPackets([$this], $this->batchedPackets, false);
+		$this->batchedPackets = [];
 		$timings->stopTiming();
 		return true;
 	}

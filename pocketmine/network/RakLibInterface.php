@@ -209,6 +209,12 @@ class RakLibInterface implements ServerInstance, AdvancedSourceInterface{
 		if(isset($this->identifiers[$h = spl_object_hash($player)])){
 			$identifier = $this->identifiers[$h];
 			$pk = null;
+
+			// interaction feedback (break/place, sounds, particles) goes out
+			// immediately instead of waiting in the queue
+			if(isset(Info::IMMEDIATE_PACKETS[$packet::NETWORK_ID])){
+				$immediate = true;
+			}
 			if(!$packet->isEncoded){
 				$packet->encode();
 			}elseif(!$needACK){
