@@ -1,0 +1,136 @@
+<?php
+
+/*
+ *
+ *   _____       _                          _
+ *  / ____|     | |                        (_)
+ * | (___  _   _| |__  _ __ ___   __ _ _ __ _ _ __   ___
+ *  \___ \| | | | '_ \| '_ ` _ \ / _` | '__| | '_ \ / _ \
+ *  ____) | |_| | |_) | | | | | | (_| | |  | | | | |  __/
+ * |_____/ \__,_|_.__/|_| |_| |_|\__,_|_|  |_|_| |_|\___|
+ *
+ * This program is private software. No license required.
+ * Publication of this program is forbidden and will be punished.
+ *
+ * @author SEMENNEJO
+ * @link vk.com/vk.snikers && t.me/semennejo
+ *
+ *
+ */
+
+declare(strict_types=1);
+
+namespace pocketmine\level\generator\vanilla\block\utils;
+
+use pocketmine\level\generator\vanilla\item\enchantment\Enchantment;
+use pocketmine\level\generator\vanilla\item\Item;
+
+use function max;
+use function min;
+use function mt_getrandmax;
+use function mt_rand;
+
+final class FortuneDropHelper
+{
+	/**
+	 * If a random number between 0-1 is greater than 2/(level+2), this multiplies the max drop amount by level+1, and
+	 * picks a random amount between the minimum and multiplied maximum. Each level of fortune increases the chance of
+	 * fortune activation, and also increases the maximum drop limit when activated.
+	 *
+	 * Otherwise, returns a random amount of the item between the minimum and original maximum.
+	 *
+	 * @param Item $usedItem The item used to break the block
+	 * @param int  $min      Minimum amount
+	 * @param int  $maxBase  Maximum amount, as if fortune level was 0
+	 *
+	 * @return int the number of items to drop
+	 */
+	public static function weighted(Item $usedItem, int $min, int $maxBase) : int
+	{
+		if ($maxBase < $min) {
+			throw new \InvalidArgumentException("Maximum drop amount must be greater than or equal to minimum drop amount");
+		}
+
+		$fortuneLevel = $usedItem->getEnchantmentLevel(Enchantment::FORTUNE);
+
+		return mt_rand(
+			$min,
+			$fortuneLevel > 0 && mt_rand() / mt_getrandmax() > 2 / ($fortuneLevel + 2) ?
+				$maxBase * ($fortuneLevel + 1) :
+				$maxBase
+		);
+	}
+
+	/**
+	 * Increases the drop amount according to a binomial distribution. The function will roll maxBase+level times, and add 1
+	 * if a random number between 0-1 is less than the given probability. Each level of fortune adds one extra roll.
+	 *
+	 * As many as maxBase+level items can be dropped. This applies even if the fortune level is 0.
+	 *
+	 * @param float $chance   The chance of adding 1 to the amount for each roll, must be in the range 0-1
+	 * @param int   $min      Minimum amount
+	 * @param int   $minRolls Number of rolls if fortune level is 0, added to fortune level to calculate total rolls
+	 *
+	 * @return int the number of items to drop
+	 */
+	public static function binomial(Item $usedItem, int $min, int $minRolls = 3, float $chance = 4 / 7) : int
+	{
+		$fortuneLevel = $usedItem->getEnchantmentLevel(Enchantment::FORTUNE);
+
+		$count = $min;
+		$rolls = $minRolls + $fortuneLevel;
+		for ($i = 0; $i < $rolls; ++$i) {
+			if (mt_rand() / mt_getrandmax() < $chance) {
+				++$count;
+			}
+		}
+
+		return $count;
+	}
+
+	/**
+	 * Adds the fortune level to the base max and picks a random number between the minimim and adjusted maximum.
+	 * Each amount in the range has an equal chance of being picked.
+	 *
+	 * @param int $maxBase Maximum base amount, as if the fortune level was 0
+	 *
+	 * @return int the number of items to drop
+	 */
+	public static function discrete(Item $usedItem, int $min, int $maxBase) : int
+	{
+		if ($maxBase < $min) {
+			throw new \InvalidArgumentException("Minimum base drop amount must be less than or equal to maximum base drop amount");
+		}
+
+		$max = $maxBase + $usedItem->getEnchantmentLevel(Enchantment::FORTUNE);
+		return mt_rand($min, $max);
+	}
+
+	/**
+	 * Calculates a chance of getting an extra bonus drop by reducing the chance divisor by a given amount per fortune
+	 * level.
+	 *
+	 * @param int $divisorBase             The number to divide 1 by to get the chance, as if the fortune level was 0
+	 * @param int $divisorSubtractPerLevel The amount to subtract from the divisor for each level of fortune
+	 *
+	 * @return bool whether the bonus drop should be added
+	 */
+	public static function bonusChanceDivisor(Item $usedItem, int $divisorBase, int $divisorSubtractPerLevel) : bool
+	{
+		$fortuneLevel = $usedItem->getEnchantmentLevel(Enchantment::FORTUNE);
+		return mt_rand(1, max(1, $divisorBase - ($fortuneLevel * $divisorSubtractPerLevel))) === 1;
+	}
+
+	/**
+	 * Calculates a chance of getting an extra bonus drop by increasing the chance by a fixed amount per fortune level.
+	 *
+	 * @param float $chanceBase          The base chance of getting a bonus drop, as if the fortune level was 0
+	 * @param float $addedChancePerLevel The amount to add to the chance for each level of fortune
+	 */
+	public static function bonusChanceFixed(Item $usedItem, float $chanceBase, float $addedChancePerLevel) : bool
+	{
+		$fortuneLevel = $usedItem->getEnchantmentLevel(Enchantment::FORTUNE);
+		$chance = min(1, $chanceBase + ($fortuneLevel * $addedChancePerLevel));
+		return mt_rand() / mt_getrandmax() < $chance;
+	}
+}

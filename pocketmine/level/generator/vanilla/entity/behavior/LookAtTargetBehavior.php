@@ -1,0 +1,47 @@
+<?php
+
+/*
+ *
+ *   _____       _                          _
+ *  / ____|     | |                        (_)
+ * | (___  _   _| |__  _ __ ___   __ _ _ __ _ _ __   ___
+ *  \___ \| | | | '_ \| '_ ` _ \ / _` | '__| | '_ \ / _ \
+ *  ____) | |_| | |_) | | | | | | (_| | |  | | | | |  __/
+ * |_____/ \__,_|_.__/|_| |_| |_|\__,_|_|  |_|_| |_|\___|
+ *
+ * This program is private software. No license required.
+ * Publication of this program is forbidden and will be punished.
+ *
+ * @author SEMENNEJO
+ * @link vk.com/vk.snikers && t.me/semennejo
+ *
+ *
+ */
+
+declare(strict_types=1);
+
+namespace pocketmine\level\generator\vanilla\entity\behavior;
+
+use pocketmine\level\generator\vanilla\entity\Entity;
+use pocketmine\level\generator\vanilla\entity\Mob;
+
+class LookAtTargetBehavior extends LookAtEntityBehavior
+{
+	public function __construct(Mob $mob, float $lookDistance = 8.0)
+	{
+		parent::__construct($mob, Entity::class, $lookDistance);
+	}
+
+	public function canStart() : bool
+	{
+		$target = $this->mob->getTargetEntity();
+
+		if ($target !== null) {
+			$this->nearestEntity = $target;
+
+			return true;
+		}
+
+		return false;
+	}
+}

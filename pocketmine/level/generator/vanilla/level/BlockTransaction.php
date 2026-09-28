@@ -1,0 +1,149 @@
+<?php
+
+/*
+ *
+ *   _____       _                          _
+ *  / ____|     | |                        (_)
+ * | (___  _   _| |__  _ __ ___   __ _ _ __ _ _ __   ___
+ *  \___ \| | | | '_ \| '_ ` _ \ / _` | '__| | '_ \ / _ \
+ *  ____) | |_| | |_) | | | | | | (_| | |  | | | | |  __/
+ * |_____/ \__,_|_.__/|_| |_| |_|\__,_|_|  |_|_| |_|\___|
+ *
+ * This program is private software. No license required.
+ * Publication of this program is forbidden and will be punished.
+ *
+ * @author SEMENNEJO
+ * @link vk.com/vk.snikers && t.me/semennejo
+ *
+ *
+ */
+
+declare(strict_types=1);
+
+namespace pocketmine\level\generator\vanilla\level;
+
+use pocketmine\level\generator\vanilla\block\Block;
+use pocketmine\level\generator\vanilla\math\Vector3;
+use pocketmine\level\generator\vanilla\utils\Utils;
+
+class BlockTransaction
+{
+	/** @var Block[][][] */
+	private array $blocks = [];
+
+	/**
+	 * @var \Closure[]
+	 * @phpstan-var (\Closure(ChunkManager $level, int $x, int $y, int $z) : bool)[]
+	 */
+	private array $validators = [];
+
+	public function __construct(private ChunkManager $level)
+	{
+		$this->addValidator(static function (ChunkManager $level, int $x, int $y, int $z) : bool {
+			return $level->isInWorld($x, $y, $z);
+		});
+	}
+
+	/**
+	 * Adds a block to the transaction at the given position.
+	 *
+	 * @return $this
+	 */
+	public function addBlock(Vector3 $pos, Block $state) : self
+	{
+		return $this->addBlockAt($pos->getFloorX(), $pos->getFloorY(), $pos->getFloorZ(), $state);
+	}
+
+	/**
+	 * Adds a block to the batch at the given coordinates.
+	 *
+	 * @return $this
+	 */
+	public function addBlockAt(int $x, int $y, int $z, Block $state) : self
+	{
+		$this->blocks[$x][$y][$z] = $state;
+		return $this;
+	}
+
+	/**
+	 * Reads a block from the given world, masked by the blocks in this transaction. This can be useful if you want to
+	 * add blocks to the transaction that depend on previous blocks should they exist.
+	 */
+	public function fetchBlock(Vector3 $pos) : Block
+	{
+		return $this->fetchBlockAt($pos->getFloorX(), $pos->getFloorY(), $pos->getFloorZ());
+	}
+
+	/**
+	 * @see BlockTransaction::fetchBlock()
+	 */
+	public function fetchBlockAt(int $x, int $y, int $z) : Block
+	{
+		return $this->blocks[$x][$y][$z] ?? $this->level->getBlockAt($x, $y, $z);
+	}
+
+	/**
+	 * Validates and attempts to apply the transaction to the given world. If any part of the transaction fails to
+	 * validate, no changes will be made to the world.
+	 *
+	 * @return bool if the application was successful
+	 */
+	public function apply() : bool
+	{
+		foreach ($this->getBlocks() as [$x, $y, $z, $_]) {
+			foreach ($this->validators as $validator) {
+				if (!$validator($this->level, $x, $y, $z)) {
+					return false;
+				}
+			}
+		}
+		$changedBlocks = 0;
+		foreach ($this->getBlocks() as [$x, $y, $z, $block]) {
+			$oldBlock = $this->level->getBlockAt($x, $y, $z);
+			if (!$oldBlock->isSameState($block)) {
+				$this->level->setBlockAt($x, $y, $z, $block);
+				$changedBlocks++;
+			}
+		}
+		return $changedBlocks !== 0;
+	}
+
+	/**
+	 * @return \Generator|mixed[] [int $x, int $y, int $z, Block $block]
+	 * @phpstan-return \Generator<int, array{int, int, int, Block}, void, void>
+	 */
+	public function getBlocks() : \Generator
+	{
+		foreach ($this->blocks as $x => $yLine) {
+			foreach ($yLine as $y => $zLine) {
+				foreach ($zLine as $z => $block) {
+					yield [$x, $y, $z, $block];
+				}
+			}
+		}
+	}
+
+	/**
+	 * Add a validation predicate which will be used to validate every block.
+	 * The callable signature should be the same as the below dummy function.
+	 * @see BlockTransaction::dummyValidator()
+	 *
+	 * @phpstan-param \Closure(ChunkManager $level, int $x, int $y, int $z) : bool $validator
+	 */
+	public function addValidator(\Closure $validator) : void
+	{
+		Utils::validateCallableSignature([$this, 'dummyValidator'], $validator);
+		$this->validators[] = $validator;
+	}
+
+	/**
+	 * Dummy function demonstrating the required closure signature for validators.
+	 * @see BlockTransaction::addValidator()
+	 *
+	 * @dummy
+	 */
+	public function dummyValidator(ChunkManager $level, int $x, int $y, int $z) : bool
+	{
+		return true;
+	}
+}

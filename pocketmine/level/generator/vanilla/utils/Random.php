@@ -1,0 +1,125 @@
+<?php
+
+/*
+ *
+ *   _____       _                          _
+ *  / ____|     | |                        (_)
+ * | (___  _   _| |__  _ __ ___   __ _ _ __ _ _ __   ___
+ *  \___ \| | | | '_ \| '_ ` _ \ / _` | '__| | '_ \ / _ \
+ *  ____) | |_| | |_) | | | | | | (_| | |  | | | | |  __/
+ * |_____/ \__,_|_.__/|_| |_| |_|\__,_|_|  |_|_| |_|\___|
+ *
+ * This program is private software. No license required.
+ * Publication of this program is forbidden and will be punished.
+ *
+ * @author SEMENNEJO
+ * @link vk.com/vk.snikers && t.me/semennejo
+ *
+ *
+ */
+
+declare(strict_types=1);
+
+namespace pocketmine\level\generator\vanilla\utils;
+
+use function time;
+
+/**
+ * XorShift128Engine Random Number Noise, used for fast seeded values
+ * Most of the code in this class was adapted from the XorShift128Engine in the php-random library.
+ */
+class Random{
+	public const X = 123456789;
+	public const Y = 362436069;
+	public const Z = 521288629;
+	public const W = 88675123;
+
+	private int $x;
+	private int $y;
+	private int $z;
+	private int $w;
+
+	protected int $seed;
+
+	/**
+	 * @param int $seed Integer to be used as seed.
+	 */
+	public function __construct(int $seed = -1){
+		if($seed === -1){
+			$seed = time();
+		}
+
+		$this->setSeed($seed);
+	}
+
+	/**
+	 * @param int $seed Integer to be used as seed.
+	 */
+	public function setSeed(int $seed) : void{
+		$this->seed = $seed;
+		$this->x = self::X ^ $seed;
+		$this->y = self::Y ^ ($seed << 17) | (($seed >> 15) & 0x7fffffff) & 0xffffffff;
+		$this->z = self::Z ^ ($seed << 31) | (($seed >> 1) & 0x7fffffff) & 0xffffffff;
+		$this->w = self::W ^ ($seed << 18) | (($seed >> 14) & 0x7fffffff) & 0xffffffff;
+	}
+
+	public function getSeed() : int{
+		return $this->seed;
+	}
+
+	/**
+	 * Returns an 31-bit integer (not signed)
+	 */
+	public function nextInt() : int{
+		return $this->nextSignedInt() & 0x7fffffff;
+	}
+
+	/**
+	 * Returns a 32-bit integer (signed)
+	 */
+	public function nextSignedInt() : int{
+		$t = ($this->x ^ ($this->x << 11)) & 0xffffffff;
+
+		$this->x = $this->y;
+		$this->y = $this->z;
+		$this->z = $this->w;
+		$this->w = ($this->w ^ (($this->w >> 19) & 0x7fffffff) ^ ($t ^ (($t >> 8) & 0x7fffffff))) & 0xffffffff;
+
+		return Binary::signInt($this->w);
+	}
+
+	/**
+	 * Returns a float between 0.0 and 1.0 (inclusive)
+	 */
+	public function nextFloat() : float{
+		return $this->nextInt() / 0x7fffffff;
+	}
+
+	/**
+	 * Returns a float between -1.0 and 1.0 (inclusive)
+	 */
+	public function nextSignedFloat() : float{
+		return $this->nextSignedInt() / 0x7fffffff;
+	}
+
+	/**
+	 * Returns a random boolean
+	 */
+	public function nextBoolean() : bool{
+		return ($this->nextSignedInt() & 0x01) === 0;
+	}
+
+	/**
+	 * Returns a random integer between $start and $end
+	 *
+	 * @param int $start default 0
+	 * @param int $end   default 0x7fffffff
+	 */
+	public function nextRange(int $start = 0, int $end = 0x7fffffff) : int{
+		return $start + ($this->nextInt() % ($end + 1 - $start));
+	}
+
+	public function nextBoundedInt(int $bound) : int{
+		return $this->nextInt() % $bound;
+	}
+}

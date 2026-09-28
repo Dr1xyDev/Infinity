@@ -104,6 +104,7 @@ use pocketmine\level\generator\VoidGenerator;
 use pocketmine\level\generator\Generator;
 use pocketmine\level\generator\hell\Nether;
 use pocketmine\level\generator\normal\Normal;
+use pocketmine\level\generator\vanilla\VanillaAdapter;
 use pocketmine\level\Level;
 use pocketmine\metadata\EntityMetadataStore;
 use pocketmine\metadata\LevelMetadataStore;
@@ -1926,11 +1927,18 @@ class Server{
 			}
 
 
+			// Generacion vanilla completa (arbol SMC vendorizado en level\generator\vanilla)
+			Generator::addGenerator(VanillaAdapter::class, "normal");
+			Generator::addGenerator(VanillaAdapter::class, "default");
+			Generator::addGenerator(VanillaAdapter::class, "vanilla");
+			Generator::addGenerator(VanillaAdapter::class, "nether");
+			Generator::addGenerator(VanillaAdapter::class, "hell");
+			Generator::addGenerator(VanillaAdapter::class, "end");
+			Generator::addGenerator(VanillaAdapter::fromServerLevelType("DEFAULT"), "DEFAULT");
+			// Generadores legacy conservados bajo otros nombres
+			Generator::addGenerator(Normal::class, "legacy");
 			Generator::addGenerator(Flat::class, "flat");
-			Generator::addGenerator(Normal::class, "normal");
-			Generator::addGenerator(Normal::class, "default");
-			Generator::addGenerator(Nether::class, "hell");
-			Generator::addGenerator(Nether::class, "nether");
+			Generator::addGenerator(Nether::class, "legacy_nether");
 			Generator::addGenerator(VoidGenerator::class, "void");
 
 			foreach((array) $this->getProperty("worlds", []) as $name => $worldSetting){

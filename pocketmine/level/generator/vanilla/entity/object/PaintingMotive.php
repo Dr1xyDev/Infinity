@@ -1,0 +1,119 @@
+<?php
+
+/*
+ *
+ *   _____       _                          _
+ *  / ____|     | |                        (_)
+ * | (___  _   _| |__  _ __ ___   __ _ _ __ _ _ __   ___
+ *  \___ \| | | | '_ \| '_ ` _ \ / _` | '__| | '_ \ / _ \
+ *  ____) | |_| | |_) | | | | | | (_| | |  | | | | |  __/
+ * |_____/ \__,_|_.__/|_| |_| |_|\__,_|_|  |_|_| |_|\___|
+ *
+ * This program is private software. No license required.
+ * Publication of this program is forbidden and will be punished.
+ *
+ * @author SEMENNEJO
+ * @link vk.com/vk.snikers && t.me/semennejo
+ *
+ *
+ */
+
+declare(strict_types=1);
+
+namespace pocketmine\level\generator\vanilla\entity\object;
+
+class PaintingMotive
+{
+	/** @var PaintingMotive[] */
+	protected static $motives = [];
+
+	public static function init() : void
+	{
+		foreach ([
+			new PaintingMotive(1, 1, "Alban"),
+			new PaintingMotive(1, 1, "Aztec"),
+			new PaintingMotive(1, 1, "Aztec2"),
+			new PaintingMotive(1, 1, "Bomb"),
+			new PaintingMotive(1, 1, "Kebab"),
+			new PaintingMotive(1, 1, "Plant"),
+			new PaintingMotive(1, 1, "Wasteland"),
+			new PaintingMotive(1, 2, "Graham"),
+			new PaintingMotive(1, 2, "Wanderer"),
+			new PaintingMotive(2, 1, "Courbet"),
+			new PaintingMotive(2, 1, "Creebet"),
+			new PaintingMotive(2, 1, "Pool"),
+			new PaintingMotive(2, 1, "Sea"),
+			new PaintingMotive(2, 1, "Sunset"),
+			new PaintingMotive(2, 2, "Bust"),
+			new PaintingMotive(2, 2, "Earth"),
+			new PaintingMotive(2, 2, "Fire"),
+			new PaintingMotive(2, 2, "Match"),
+			new PaintingMotive(2, 2, "SkullAndRoses"),
+			new PaintingMotive(2, 2, "Stage"),
+			new PaintingMotive(2, 2, "Void"),
+			new PaintingMotive(2, 2, "Water"),
+			new PaintingMotive(2, 2, "Wind"),
+			new PaintingMotive(2, 2, "Wither"),
+			new PaintingMotive(4, 2, "Fighters"),
+			new PaintingMotive(4, 3, "DonkeyKong"),
+			new PaintingMotive(4, 3, "Skeleton"),
+			new PaintingMotive(4, 4, "BurningSkull"),
+			new PaintingMotive(4, 4, "Pigscene"),
+			new PaintingMotive(4, 4, "Pointer")
+		] as $motive) {
+			self::registerMotive($motive);
+		}
+	}
+
+	public static function registerMotive(PaintingMotive $motive) : void
+	{
+		self::$motives[$motive->getName()] = $motive;
+	}
+
+	public static function getMotiveByName(string $name) : ?PaintingMotive
+	{
+		return self::$motives[$name] ?? null;
+	}
+
+	/**
+	 * @return PaintingMotive[]
+	 */
+	public static function getAll() : array
+	{
+		return self::$motives;
+	}
+
+	/** @var string */
+	protected $name;
+	/** @var int */
+	protected $width;
+	/** @var int */
+	protected $height;
+
+	public function __construct(int $width, int $height, string $name)
+	{
+		$this->name = $name;
+		$this->width = $width;
+		$this->height = $height;
+	}
+
+	public function getName() : string
+	{
+		return $this->name;
+	}
+
+	public function getWidth() : int
+	{
+		return $this->width;
+	}
+
+	public function getHeight() : int
+	{
+		return $this->height;
+	}
+
+	public function __toString() : string
+	{
+		return "PaintingMotive(name: " . $this->getName() . ", height: " . $this->getHeight() . ", width: " . $this->getWidth() . ")";
+	}
+}

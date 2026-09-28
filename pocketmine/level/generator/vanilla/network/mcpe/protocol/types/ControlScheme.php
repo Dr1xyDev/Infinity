@@ -1,0 +1,39 @@
+<?php
+
+/*
+ *
+ *   _____       _                          _
+ *  / ____|     | |                        (_)
+ * | (___  _   _| |__  _ __ ___   __ _ _ __ _ _ __   ___
+ *  \___ \| | | | '_ \| '_ ` _ \ / _` | '__| | '_ \ / _ \
+ *  ____) | |_| | |_) | | | | | | (_| | |  | | | | |  __/
+ * |_____/ \__,_|_.__/|_| |_| |_|\__,_|_|  |_|_| |_|\___|
+ *
+ * This program is private software. No license required.
+ * Publication of this program is forbidden and will be punished.
+ *
+ * @author SEMENNEJO
+ * @link vk.com/vk.snikers && t.me/semennejo
+ *
+ *
+ */
+
+declare(strict_types=1);
+
+namespace pocketmine\level\generator\vanilla\network\mcpe\protocol\types;
+
+use pocketmine\level\generator\vanilla\network\mcpe\protocol\ClientboundControlSchemeSetPacket;
+
+/**
+ * @see ClientboundControlSchemeSetPacket
+ */
+enum ControlScheme : int
+{
+	use PacketIntEnumTrait;
+
+	case LOCKED_PLAYER_RELATIVE_STRAFE = 0;
+	case CAMERA_RELATIVE = 1;
+	case CAMERA_RELATIVE_STRAFE = 2;
+	case PLAYER_RELATIVE = 3;
+	case PLAYER_RELATIVE_STRAFE = 4;
+}

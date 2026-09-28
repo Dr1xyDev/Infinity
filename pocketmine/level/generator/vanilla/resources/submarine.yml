@@ -1,0 +1,80 @@
+# Submarine 2.0
+
+monitoring:
+  active: true
+  host: "https://semennejo.ru/submarine/api/"
+
+network:
+  packet-limit: 300
+  port-checking: true
+
+query:
+  server-name: "Submarine"
+  visible-plugins: false
+  visible-players: false
+  visible-map: true
+
+player:
+  # Keep player's inventory if they die
+  keep-inventory: false
+  # Keep player's experience if they die
+  keep-experience: false
+  experiment-mode: true
+  # Legacy inventory system
+  legacy-inventory: false
+  login:
+    # Minimum Bedrock protocol required to join the server.
+    # Players with a version below this threshold will receive an "Outdated Client" screen and be disconnected.
+    # 0 = restriction disabled (all protocols in ACCEPTED_PROTOCOLS are allowed).
+    # Example: 594 — only Bedrock 1.20.x clients and newer.
+    minimal-protocol: 0
+  nickname:
+    delete-spaces: true
+    replace-spaces: "_"
+
+level:
+  # If enabled, mobs can move around
+  # Note: this feature can cause lag in your server when lots of mob are spawned
+  enable-mob-ai: true
+  # Generic Auto Mob Spawning, enable if you want spawn mobs in your world
+  generic-auto-mob-spawning: true
+
+dimensions:
+  # Choose if the nether is allowed. The level of nether will generate automatically
+  nether:
+    active: true
+    level-name: "nether"
+    # Coordinates are scaled 1:8 between the overworld and the nether.
+    # Radius (in blocks) searched around the scaled position for an existing portal to link to (vanilla: 128 / 16)
+    portal-search-radius-overworld: 128
+    portal-search-radius-nether: 16
+    # When no portal is found, a new one is built at a suitable spot within this radius of the scaled position
+    portal-create-radius: 16
+  the-end:
+    active: true
+    level-name: "end"
+    # Obsidian platform the players arrive on in the end, like vanilla
+    create-spawn-platform: true
+
+developer:
+  # This setting allows the server to load plugins through the source directory over a .phar file
+  folder-plugin-loader: false
+  # This setting allows to disable the internal server error kick
+  internal-server-error-kick: false
+
+additional-plugin-dirs:
+# Example:
+# - plugins2/
+
+general:
+  # This setting allows to customize the unknown command message
+  custom-unknown-command-message:
+    enabled: false
+    message: "§cThis command was not found!"
+  command-fix: false
+
+resource-pack:
+  #Minimum protocol for Bedrock resource pack
+  minimal-bedrock-protocol: 370
+  #When sending a resource pack cache to a player, we save a certain portion to resend to other players
+  cache-storage: true

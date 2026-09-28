@@ -1,0 +1,505 @@
+<?php
+
+/*
+ *
+ *   _____       _                          _
+ *  / ____|     | |                        (_)
+ * | (___  _   _| |__  _ __ ___   __ _ _ __ _ _ __   ___
+ *  \___ \| | | | '_ \| '_ ` _ \ / _` | '__| | '_ \ / _ \
+ *  ____) | |_| | |_) | | | | | | (_| | |  | | | | |  __/
+ * |_____/ \__,_|_.__/|_| |_| |_|\__,_|_|  |_|_| |_|\___|
+ *
+ * This program is private software. No license required.
+ * Publication of this program is forbidden and will be punished.
+ *
+ * @author SEMENNEJO
+ * @link vk.com/vk.snikers && t.me/semennejo
+ *
+ *
+ */
+
+declare(strict_types=1);
+
+namespace pocketmine\level\generator\vanilla\maps;
+
+use pocketmine\level\generator\vanilla\item\Map;
+use pocketmine\level\generator\vanilla\level\Level;
+use pocketmine\level\generator\vanilla\maps\renderer\MapRenderer;
+use pocketmine\level\generator\vanilla\maps\renderer\VanillaMapRenderer;
+use pocketmine\level\generator\vanilla\nbt\tag\CompoundTag;
+use pocketmine\level\generator\vanilla\nbt\tag\IntArrayTag;
+use pocketmine\level\generator\vanilla\nbt\tag\ListTag;
+use pocketmine\level\generator\vanilla\network\mcpe\protocol\types\DimensionIds;
+use pocketmine\level\generator\vanilla\network\mcpe\protocol\types\MapDecoration;
+use pocketmine\level\generator\vanilla\network\mcpe\protocol\types\MapTrackedObject;
+use pocketmine\Player;
+use pocketmine\level\generator\vanilla\utils\Color;
+
+use function abs;
+use function array_fill;
+use function array_keys;
+use function boolval;
+use function count;
+use function floor;
+use function intval;
+use function spl_object_hash;
+use function spl_object_id;
+
+class MapData
+{
+	/** @var int */
+	protected $id = 0;
+	/** @var int */
+	protected $xCenter = 0;
+	protected $zCenter = 0;
+	/** @var int */
+	protected $dimension = DimensionIds::OVERWORLD;
+
+	/** @var int */
+	protected $scale = 0;
+	/** @var Color[][] */
+	protected $colors = [];
+	/** @var MapDecoration[] */
+	protected $decorations = [];
+	/** @var MapTrackedObject[] */
+	protected $trackedObjects = [];
+
+	/** @var bool */
+	protected $isLocked = false;
+	/** @var bool */
+	protected $unlimitedTracking = true;
+	/** @var bool */
+	protected $virtual = false;
+
+	/** @var MapInfo[] */
+	protected $playersMap = [];
+	/** @var MapRenderer[] */
+	protected $renderers = [];
+	/** @var bool */
+	protected $dirty = false;
+	/** @var string */
+	protected $levelName = "";
+
+	/** @var Color[][] */
+	protected static $emptyColors = [];
+
+	/**
+	 * MapData constructor.
+	 *
+	 * @param MapRenderer[]|null $renderers
+	 */
+	public function __construct(int $mapId, ?array $renderers = null)
+	{
+		$this->id = $mapId;
+
+		if ($renderers === null) {
+			$renderers = [new VanillaMapRenderer()];
+		}
+		$this->renderers = $renderers;
+
+		foreach ($renderers as $renderer) {
+			$renderer->initialize($this);
+		}
+
+		if (count(self::$emptyColors) === 0) {
+			self::$emptyColors = array_fill(0, 128, array_fill(0, 128, new Color(0, 0, 0, 0)));
+		}
+
+		$this->colors = self::$emptyColors;
+	}
+
+	public function getId() : int
+	{
+		return $this->id;
+	}
+
+	public function setId(int $id) : void
+	{
+		$this->id = $id;
+	}
+
+	public function getDimension() : int
+	{
+		return $this->dimension;
+	}
+
+	public function setDimension(int $dimension) : void
+	{
+		$this->dimension = $dimension;
+		$this->markAsDirty();
+	}
+
+	public function getScale() : int
+	{
+		return $this->scale;
+	}
+
+	public function setScale(int $scale) : void
+	{
+		$this->scale = $scale;
+		$this->markAsDirty();
+	}
+
+	/**
+	 * @return Color[][]
+	 */
+	public function getColors() : array
+	{
+		return $this->colors;
+	}
+
+	/**
+	 * @param Color[][] $colors
+	 */
+	public function setColors(array $colors) : void
+	{
+		$this->colors = $colors;
+		$this->markAsDirty();
+	}
+
+	public function setColorAt(int $x, int $y, Color $color) : void
+	{
+		$this->colors[$y][$x] = $color;
+		$this->markAsDirty();
+	}
+
+	public function getColorAt(int $x, int $y) : Color
+	{
+		return $this->colors[$y][$x] ?? new Color(0, 0, 0, 0);
+	}
+
+	public function setCenter(int $x, int $z) : void
+	{
+		$this->xCenter = $x;
+		$this->zCenter = $z;
+
+		$this->markAsDirty();
+	}
+
+	public function getCenterX() : int
+	{
+		return $this->xCenter;
+	}
+
+	public function getCenterZ() : int
+	{
+		return $this->zCenter;
+	}
+
+	public function calculateMapCenter(int $x, int $z) : void
+	{
+		$i = 128 * (1 << $this->getScale());
+		$j = (int) floor(($x + 64.0) / $i);
+		$k = (int) floor(($z + 64.0) / $i);
+		$this->setCenter($j * $i + $i / 2 - 64, $k * $i + $i / 2 - 64);
+	}
+
+	public function readSaveData(CompoundTag $nbt) : void
+	{
+		$this->setLevelName($nbt->getString("worldName", ""));
+		$this->dimension = $nbt->getByte("dimension", 0);
+		$this->xCenter = $nbt->getInt("xCenter", 0);
+		$this->zCenter = $nbt->getInt("zCenter", 0);
+		$this->scale = $nbt->getByte("scale", 0);
+		$this->isLocked = boolval($nbt->getByte("isLocked", 0));
+		if ($this->scale > 4) {
+			$this->scale = 0;
+		}
+		if ($nbt->hasTag("colors", IntArrayTag::class)) {
+			$colors = $nbt->getIntArray("colors");
+			for ($y = 0; $y < 128; $y++) {
+				for ($x = 0; $x < 128; $x++) {
+					if (isset($colors[$x + $y * 128])) {
+						$this->colors[$y][$x] = Color::fromABGR($colors[$x + $y * 128]);
+					}
+				}
+			}
+		}
+	}
+
+	public function writeSaveData(CompoundTag $nbt) : void
+	{
+		$nbt->setString("worldName", $this->levelName);
+		$nbt->setByte("dimension", $this->dimension);
+		$nbt->setInt("xCenter", $this->xCenter);
+		$nbt->setInt("zCenter", $this->zCenter);
+		$nbt->setByte("scale", $this->scale);
+		$nbt->setByte("isLocked", intval($this->isLocked));
+		if (count($this->colors) > 0) {
+			$colors = [];
+			for ($y = 0; $y < 128; $y++) {
+				for ($x = 0; $x < 128; $x++) {
+					if (isset($this->colors[$y]) && isset($this->colors[$y][$x])) {
+						$colors[$x + $y * 128] = $this->colors[$y][$x]->toABGR();
+					}
+				}
+			}
+
+			$nbt->setIntArray("colors", $colors, true);
+		}
+	}
+
+	/**
+	 * @return MapDecoration[]
+	 */
+	public function getDecorations() : array
+	{
+		return $this->decorations;
+	}
+
+	public function getDecoration(string $identifier) : ?MapDecoration
+	{
+		return $this->decorations[$identifier] ?? null;
+	}
+
+	public function setDecoration(string $identifier, MapDecoration $decoration) : void
+	{
+		$this->decorations[$identifier] = $decoration;
+	}
+
+	public function removeDecoration(string $identifier) : void
+	{
+		unset($this->decorations[$identifier]);
+	}
+
+	/**
+	 * @param MapDecoration[] $decorations
+	 */
+	public function setDecorations(array $decorations) : void
+	{
+		$this->decorations = array_keys($decorations);
+		$this->markAsDirty();
+	}
+
+	/**
+	 * @return MapTrackedObject[]
+	 */
+	public function getTrackedObjects() : array
+	{
+		return $this->trackedObjects;
+	}
+
+	/**
+	 * @param MapTrackedObject[] $trackedObjects
+	 */
+	public function setTrackedObjects(array $trackedObjects) : void
+	{
+		$this->trackedObjects = $trackedObjects;
+		$this->markAsDirty();
+	}
+
+	public function onMapCrated(Player $player) : void
+	{
+		foreach ($this->renderers as $renderer) {
+			$renderer->onMapCreated($player, $this);
+		}
+
+		$this->setLevelName($player->level->getFolderName());
+	}
+
+	public function isLocked() : bool
+	{
+		return $this->isLocked;
+	}
+
+	public function setLocked(bool $locked) : void
+	{
+		$this->isLocked = $locked;
+	}
+
+	public function getMapInfo(Player $player) : MapInfo
+	{
+		if (!isset($this->playersMap[spl_object_hash($player)])) {
+			$this->playersMap[spl_object_hash($player)] = new MapInfo($player);
+
+			$mo = new MapTrackedObject();
+			$mo->entityUniqueId = $player->getId();
+			$mo->type = MapTrackedObject::TYPE_PLAYER;
+			$this->trackedObjects[$player->getName()] = $mo;
+		}
+		return $this->playersMap[spl_object_hash($player)];
+	}
+
+	public function updateTextureAt(int $x, int $y) : void
+	{
+		foreach ($this->playersMap as $info) {
+			$info->updateTextureAt($x, $y);
+		}
+
+		$this->markAsDirty();
+	}
+
+	/**
+	 * Renders map for holder player
+	 */
+	public function renderMap(Player $holder) : void
+	{
+		foreach ($this->renderers as $renderer) {
+			$renderer->render($this, $holder);
+		}
+	}
+
+	/**
+	 * Adds the player passed to the list of visible players and checks to see which players are visible
+	 */
+	public function updateVisiblePlayers(Player $player, Map $mapStack)
+	{
+		if (!isset($this->playersMap[$hash = spl_object_hash($player)])) {
+			$this->playersMap[$hash] = new MapInfo($player);
+			$mo = new MapTrackedObject();
+			$mo->entityUniqueId = $player->getId();
+			$mo->type = MapTrackedObject::TYPE_PLAYER;
+			$this->trackedObjects[$player->getName()] = $mo;
+		}
+
+		if ($mapStack->isMapDisplayPlayers()) {
+			foreach ($this->playersMap as $info) {
+				$pi = $info->player;
+				if ($pi->isOnline() && $pi->isAlive() && $pi->level->getDimension() === $this->dimension && ($pi->getInventory()->contains($mapStack) || $pi->getOffHandInventory()->contains($mapStack))) {
+					if (!$mapStack->isOnItemFrame()) {
+						$this->updateDecorations(MapDecoration::TYPE_PLAYER, $pi->level, $pi->getName(), $pi->getFloorX(), $pi->getFloorZ(), $pi->getYaw());
+					}
+				} else {
+					unset($this->playersMap[spl_object_hash($pi)]);
+				}
+			}
+		}
+
+		$mapNbt = $mapStack->getNamedTag();
+		if ($mapNbt->hasTag("Decorations", ListTag::class)) {
+			$decos = $mapNbt->getListTag("Decorations");
+			foreach ($decos->getValue() as $v) {
+				if ($v instanceof CompoundTag) {
+					if (!isset($this->decorations[$v->getString("id")])) {
+						$this->updateDecorations($v->getByte("type"), $player->level, $v->getString("id"), (int) $v->getDouble("x"), (int) $v->getDouble("z"), $v->getDouble("rot"));
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * Updates decorations
+	 */
+	public function updateDecorations(int $type, Level $worldIn, string $entityIdentifier, int $worldX, int $worldZ, float $rotation, ?Color $color = null)
+	{
+		$i = 1 << $this->scale;
+		$f = ($worldX - $this->xCenter) / $i;
+		$f1 = ($worldZ - $this->zCenter) / $i;
+		$b0 = (int) (($f * 2.0) + 0.5);
+		$b1 = (int) (($f1 * 2.0) + 0.5);
+		$j = 63;
+
+		$rotation = $rotation + ($rotation < 0.0 ? -8.0 : 8.0);
+		$b2 = ((int) ($rotation * 16.0 / 360.0));
+
+		if ($f >= (-$j) && $f1 >= (-$j) && $f <= $j && $f1 <= $j) {
+			if ($this->dimension > DimensionIds::OVERWORLD) {
+				$k = (int) ($worldIn->getTime() / 10);
+				$b2 = (int) ($k * $k * 34187121 + $k * 121 >> 15 & 15);
+			}
+		} else {
+			if (abs($f) >= 320.0 || abs($f1) >= 320.0) {
+				unset($this->decorations[$entityIdentifier]);
+				return;
+			}
+
+			if ($type === MapDecoration::TYPE_PLAYER && !$this->isUnlimitedTracking()) {
+				$type = MapDecoration::TYPE_PLAYER_OFF_MAP;
+			}
+
+			if ($f <= -$j) {
+				$b0 = (int) (($j * 2) + 2.5);
+			}
+
+			if ($f1 <= -$j) {
+				$b1 = (int) (($j * 2) + 2.5);
+			}
+
+			if ($f >= $j) {
+				$b0 = (int) ($j * 2 + 1);
+			}
+			if ($f1 >= $j) {
+				$b1 = (int) ($j * 2 + 1);
+			}
+		}
+
+		$this->decorations[$entityIdentifier] = new MapDecoration(
+			$type,
+			$b2,
+			$b0,
+			$b1,
+			$entityIdentifier,
+			$color ?? new Color(255, 255, 255)
+		);
+	}
+
+	public function addRenderer(MapRenderer $renderer) : void
+	{
+		$this->renderers[spl_object_id($renderer)] = $renderer;
+		$renderer->initialize($this);
+	}
+
+	public function removeRenderer(MapRenderer $renderer) : void
+	{
+		unset($this->renderers[spl_object_id($renderer)]);
+	}
+
+	/**
+	 * @return MapRenderer[]
+	 */
+	public function getRenderers() : array
+	{
+		return $this->renderers;
+	}
+
+	public function isUnlimitedTracking() : bool
+	{
+		return $this->unlimitedTracking;
+	}
+
+	public function setUnlimitedTracking(bool $unlimitedTracking) : void
+	{
+		$this->unlimitedTracking = $unlimitedTracking;
+	}
+
+	public function isVirtual() : bool
+	{
+		return $this->virtual;
+	}
+
+	public function setVirtual(bool $virtual) : void
+	{
+		$this->virtual = $virtual;
+	}
+
+	public function isDirty() : bool
+	{
+		return $this->dirty;
+	}
+
+	public function markAsDirty() : void
+	{
+		$this->setDirty(true);
+	}
+
+	public function setDirty(bool $value) : void
+	{
+		$this->dirty = $value;
+	}
+
+	public function isEmpty() : bool
+	{
+		return count($this->colors) === 0;
+	}
+
+	public function getLevelName() : string
+	{
+		return $this->levelName;
+	}
+
+	public function setLevelName(string $levelName) : void
+	{
+		$this->levelName = $levelName;
+	}
+}

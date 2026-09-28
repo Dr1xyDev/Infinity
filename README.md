@@ -2,7 +2,7 @@
 Software de server basado en Genisys 
 Version v1.1 release
 - se añadio soporte php 8.4 completo y únicamente funciona con ese php
-- se añadio generación vanilla
+- **generación vanilla al 100%** (port completo del generador de SubmarineMultiCore): ruido Perlin/Simplex vanilla, capas de biomas vanilla, superficie por bioma, cuevas, minas abandonadas, mazmorras, árboles/vegetación/ores por bioma, Nether y End con sus generadores vanilla originales. Se activa con los level-types `normal`/`default`/`vanilla` (y `nether`/`hell`/`end`); los generadores legacy quedan como `legacy`/`legacy_nether`
 - se añadio la posibilidad de cargar plugins vía folder
 - se añadieron conandos /makephar <plugin> y /extractphar <plugin_name>
 - se añadio soporte de poner motd en Infinity.yml
@@ -11,8 +11,7 @@ Version v1.1 release
 - sistema antiddos y antibot mejorado
 - mejora y optimizacion en la jugabilidad
 - bioma de montañas mejorada
-- terreno vanilla de `Normal`: base + colinas + montañas con crestas + detalle fino + ríos serpenteantes, generado en un solo paso nativo C (y con fallback PHP byte-idéntico)
-- el generador `Normal2` fue eliminado: solo existe `Normal`
+- el generador `Normal2` fue eliminado: solo existe `Normal` (ahora vanilla)
 - bugs de sintaxis arreglados
 - Generacion de estructuras ( desert village, normal village y desert piramid ) (```use el plugin de InfintyEstructures para habilitar la extension```)
 
